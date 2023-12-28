@@ -1,12 +1,12 @@
 {
-  "name": "websitebeaver/simple-mysqli",
+  "name": "progrmanial/simple-mysqli-fork",
   "description": "Wrapper class for MySQLi prepared statements",
 	"keywords": ["MySQLi", "MySQL", "prepared", "database"],
   "license": "MIT",
   "authors": [
     {
-      "name": "Daniel Marcus",
-      "email": "daniel@websitebeaver.com"
+      "name": "Imran Saadullah",
+      "email": "imransaadullah@websitebeaver.com"
     }
   ],
   "require": {
