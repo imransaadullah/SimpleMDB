@@ -29,12 +29,12 @@ PHP 7.1+
 
 # Install
 
-[Click here](https://github.com/WebsiteBeaver/Simple-MySQLi/blob/master/CHANGELOG.md) to view changes to each version.
+[Click here](https://github.com/WebsiteBeaver/Simple-MySQLi-Fork/blob/master/CHANGELOG.md) to view changes to each version.
 
 **Composer**
 
 ```
-composer require websitebeaver/simple-mysqli
+composer require progrmanial/simple-mysqli-fork
 ```
 
 Then include or require the file in your php page.
@@ -49,10 +49,10 @@ Clone either the latest version or by tag.
 
 ```
 //Get by version number
-git clone https://github.com/WebsiteBeaver/Simple-MySQLi/tree/{your version number}
+git clone https://github.com/WebsiteBeaver/Simple-MySQLi-Fork/tree/{your version number}
 
 //Get the latest
-git clone https://github.com/WebsiteBeaver/Simple-MySQLi.git
+git clone https://github.com/WebsiteBeaver/Simple-MySQLi-Fork.git
 ```
 
 Then include or require the file in your php page.
