@@ -48,6 +48,165 @@ class SimpleMySQLi {
 	}
 
 	/**
+	 * Generate insert statement queries.
+	 *
+	 * 
+	 * @param string $table name
+	 * @param associative array of $values.
+	 * @return array SQL insertion statement and array of data.
+	 * 
+	 * 
+	 */
+	public static function insert(string $table, array $data)
+    {
+        if (empty($data)) return "";
+        if (empty($table)) return "";
+        
+        $fields = " ";
+        $values = " ";
+        $k_keys = array_keys($data);
+        foreach ($data as $key => $val) {
+            $fields .= (end($k_keys) != $key)? "{$key}, " : $key;
+            $values .= (end($k_keys) != $key)? "?, " : "?";
+        }
+        return ['sql' => "INSERT INTO $table ($fields) VALUES ($values)", 'values' => array_values($data)];
+    }
+    
+	/**
+	 * Generate insert statement queries.
+	 *
+	 * 
+	 * @param string $table name
+	 * @param array $fields array of $values.
+	 * @param string $adjunct selection condition.
+	 * @return array of SQL insertion statement and array of data.
+	 * 
+	 * 
+	 */
+    public static function select_all_query(string $table, array $fields = [], $adjuncts = "")
+    {
+        $sql = "SELECT ";
+        if ($fields) {
+            foreach ($fields as $key) {
+                 if ($key != end($fields)) {
+                    $sql .= $key.", ";
+                 }else {
+                    $sql .= $key;
+                 }
+            } 
+        }else{
+            $sql .= " * ";
+        }
+        $sql .= " FROM {$table}";
+
+        $sql .= ($adjuncts)? " ".$adjuncts : "";
+
+        return ['sql'=>$sql];
+    }
+    
+    public function update(string $table, array $data = [], $adjuncts = "", $adjunctValues = [])
+    {
+        // SQL Statement Generation
+        $sql = "UPDATE {$table} SET ";
+        
+        $k_keys = array_keys($data);
+        
+        foreach ($data as $key => $val) {
+            $sql .= (end($k_keys) != $key)? "{$key} = ?, " : "{$key} = ?";
+        }
+
+        $sql .= ($adjuncts)? " ".$adjuncts : "";
+        
+        // Query Data Preparation
+        $values = [];
+        
+        array_push($values, ...array_values($data));
+        
+        if(count($adjunctValues)){
+            array_push($values, ...$adjunctValues);
+        }
+        
+        // Query Execution
+        $stmt = $this->query($sql, $values);
+                
+        if ($stmt->affectedRows()) {
+            return $this;
+        }
+        
+        return false;
+    }
+    
+    public function update2(string $table, array $data = [], $adjuncts = "", $adjunctValues = [])
+    {
+        // SQL Statement Generation
+        $sql = "UPDATE {$table} SET ";
+        
+        $k_keys = array_keys($data);
+        
+        foreach ($data as $key => $val) {
+            $sql .= (end($k_keys) != $key)? "{$key} = ?, " : "{$key} = ?";
+        }
+
+        $sql .= ($adjuncts)? " ".$adjuncts : "";
+        
+        // Query Data Preparation
+        $values = [];
+        
+        array_push($values, ...array_values($data));
+        
+        if(count($adjunctValues)){
+            array_push($values, ...$adjunctValues);
+        }
+        
+        return ['sql' => $sql, 'values' => $values];
+    }
+    
+    public function read_data($table, $fields = [], $adjunct = "", $adjunctValues = []){
+        $sql = self::select_all_query($table, $fields, $adjunct);
+        
+        $values = [];
+        
+        if(count($adjunctValues)){
+            array_push($values, ...$adjunctValues);
+        }
+        
+        $stmt = $this->query($sql['sql'], $values);
+        
+        if ($stmt) {
+            return $stmt->fetch('assoc');
+        }
+        return false;
+    }
+
+    public function read_data_all($table, $fields=[], $adjunct = "", $adjunctValues = []){
+        $sql = self::select_all_query($table, $fields, $adjunct);
+        
+        $values = [];
+        
+        if(count($adjunctValues)){
+            array_push($values, ...$adjunctValues);
+        }
+        
+        $stmt = $this->query($sql['sql'], $values);
+        
+        if ($stmt) {
+            return $stmt->fetchAll('assoc');
+        }
+        
+        return false;
+    }
+
+    public function write_data(string $table, array $data){
+        $sql = self::insert($table, $data);
+        $query = $this->query($sql['sql'], $sql['values']);
+
+        if ($query->affectedRows()) {
+            return $this;
+        }
+        return false;
+    }
+
+	/**
 	 * All queries go here. If select statement, needs to be used with either `fetch()` for single row and loop fetching or
 	 *`fetchAll()` for fetching all results
 	 *
