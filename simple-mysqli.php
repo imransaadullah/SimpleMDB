@@ -561,4 +561,26 @@ class SimpleMySQLi {
 	public function close(): void {
 		$this->mysqli->close();
 	}
+
+	public static function exportDatabase($host, $user, $password, $database, $targetFolderPath)
+    {
+        // Generate the backup file name based on the current date and time
+        $backupName = $database . '_backup_' . date('Ymd_His') . '.sql';
+    
+        // Combine the target folder path and backup file name
+        $targetFilePath = rtrim($targetFolderPath, '/') . '/' . $backupName;
+    
+        // Construct the mysqldump command
+        $command = 'mysqldump --host=' . $host . ' --user=' . $user . ' --password=' . $password . ' --databases ' . $database . ' > ' . $targetFilePath;
+    
+        // Execute the mysqldump command
+        exec($command, $output, $returnStatus);
+    
+        // Check the return status of the command
+        if ($returnStatus === 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }
