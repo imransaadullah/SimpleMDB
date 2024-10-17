@@ -67,13 +67,13 @@ class SimpleMySQLi
 	 */
 	public function prepareAndExecuteQuery(string $sql, array $params = [], string $types = ''): mysqli_stmt
 	{
-		if (!is_array($params)) {
-			$params = [$params]; // Convert scalar to array
-		}
+		// if (!is_array($params)) {
+		// 	$params = [$params]; // Convert scalar to array
+		// }
 
-		if (!$types) {
-			$types = str_repeat('s', count($params)); // Default to string types if not provided
-		}
+		// if (!$types) {
+		// 	$types = str_repeat('s', count($params)); // Default to string types if not provided
+		// }
 
 		// Prepare the SQL query
 		$stmt = $this->mysqli->prepare($sql);
@@ -82,19 +82,9 @@ class SimpleMySQLi
 			throw new mysqli_sql_exception("Failed to prepare the query: $sql");
 		}
 
-		// Bind the parameters if there are any
-		if (!empty($params)) {
-			$stmt->bind_param($types, ...$params);
-		}
+		$this->stmt = $stmt;
 
-		// Execute the statement
-		$stmt->execute();
-
-		if ($stmt->error) {
-			throw new mysqli_sql_exception("Query execution failed: " . $stmt->error);
-		}
-
-		return $stmt;
+		return $this;
 	}
 
 
