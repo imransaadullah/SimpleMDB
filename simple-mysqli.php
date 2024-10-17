@@ -65,16 +65,8 @@ class SimpleMySQLi
 	 * @return mysqli_stmt The prepared statement after execution.
 	 * @throws mysqli_sql_exception If mysqli function fails due to mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT)
 	 */
-	public function prepareAndExecuteQuery(string $sql, array $params = [], string $types = ''): mysqli_stmt
+	public function prepare(string $sql, array $params = [], string $types = ''): SimpleMySQLi
 	{
-		// if (!is_array($params)) {
-		// 	$params = [$params]; // Convert scalar to array
-		// }
-
-		// if (!$types) {
-		// 	$types = str_repeat('s', count($params)); // Default to string types if not provided
-		// }
-
 		// Prepare the SQL query
 		$stmt = $this->mysqli->prepare($sql);
 
