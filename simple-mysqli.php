@@ -285,7 +285,7 @@ class SimpleMySQLi
 		if (!$types) $types = str_repeat('s', count($values)); //String type for all variables if not specified
 
 		$stmt = $this->stmt;
-		$stmt->bind_param($types, ...$values);
+		if(count($values) > 0) $stmt->bind_param($types, ...$values);
 		$stmt->execute();
 		$this->stmtResult = $stmt->get_result();
 
