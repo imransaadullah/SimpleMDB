@@ -80,6 +80,11 @@ class SimpleMySQLi
 	}
 
 
+	public function getMySQL() {
+		return $this->mysqli;		
+	}
+
+
 	/**
 	 * Generate insert statement queries.
 	 *
