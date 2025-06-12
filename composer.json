@@ -1,7 +1,12 @@
 {
   "name": "progrmanial/simple-mysqli-fork",
   "description": "Wrapper class for MySQLi prepared statements",
-	"keywords": ["MySQLi", "MySQL", "prepared", "database"],
+  "keywords": [
+    "MySQLi",
+    "MySQL",
+    "prepared",
+    "database"
+  ],
   "license": "MIT",
   "authors": [
     {
@@ -10,9 +15,14 @@
     }
   ],
   "require": {
-		"php": ">=7.1.0"
-	},
-	"autoload": {
-    "files": ["simple-mysqli.php"]
+    "php": ">=7.1.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "SimpleMDB\\": "src/"
+    },
+    "files": [
+      "simple-mysqli.php"
+    ]
   }
 }
