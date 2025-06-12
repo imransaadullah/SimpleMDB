@@ -72,8 +72,8 @@ class SimplePDO implements DatabaseInterface
         if (!empty($sslOptions['enable'])) {
             $ssl = [
                 PDO::MYSQL_ATTR_SSL_CA => $sslOptions['ca'] ?? null,
-                PDO::MYSQL_ATTR_SSL_CERT => $sslOptions['cert'] ?? null,
-                PDO::MYSQL_ATTR_SSL_KEY => $sslOptions['key'] ?? null,
+                // PDO::MYSQL_ATTR_SSL_CERT => $sslOptions['cert'] ?? null,
+                // PDO::MYSQL_ATTR_SSL_KEY => $sslOptions['key'] ?? null,
                 PDO::MYSQL_ATTR_SSL_VERIFY_SERVER_CERT => $sslOptions['verify_cert'] ?? true,
             ];
 
