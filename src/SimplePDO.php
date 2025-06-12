@@ -106,6 +106,12 @@ class SimplePDO implements DatabaseInterface
         return $this->pdo;
     }
 
+    public function instance(): mixed
+    {
+        return $this->pdo;
+    }
+
+
     /**
      * Prepare an SQL query
      */

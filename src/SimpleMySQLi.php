@@ -114,6 +114,12 @@ class SimpleMySQLi implements DatabaseInterface
 		return $this->mysqli;		
 	}
 
+	public function instance(): mixed
+    {
+        return $this->mysqli;
+    }
+
+
 
 	/**
 	 * Generate insert statement queries.
