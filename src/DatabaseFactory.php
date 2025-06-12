@@ -1,8 +1,7 @@
 <?php
 namespace SimpleMDB;
 
-use SimpleMDB\SimpleMySQLi;
-use SimpleMDB\SimplePDO;
+use SimpleMySQLi;
 
 class DatabaseFactory
 {
