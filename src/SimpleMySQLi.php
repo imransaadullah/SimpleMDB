@@ -283,6 +283,13 @@ class SimpleMySQLi implements DatabaseInterface
 		return false;
 	}
 
+	public function delete(string $table, string $adjunct = "", array $adjunctValues = []): self | bool
+	{
+		$adj  = $adjunct ? " WHERE {$adjunct}" : "";
+		$stmt = $this->query("DELETE FROM {$table}{$adj}", $adjunctValues);
+		return $stmt->affectedRows() > 0 ? $this : false;
+	}
+
 	/**
 	 * All queries go here. If select statement, needs to be used with either `fetch()` for single row and loop fetching or
 	 *`fetchAll()` for fetching all results

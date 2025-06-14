@@ -224,6 +224,13 @@ class SimplePDO implements DatabaseInterface
         return $this->affectedRows() > 0 ? $this : false;
     }
 
+    public function delete(string $table, string $adjunct = "", array $adjunctValues = []): self | bool
+    {
+        $adj = $adjunct ? " WHERE {$adjunct}" : "";
+        $this->query("DELETE FROM {$table}{$adj}", $adjunctValues);
+        return $this->affectedRows() > 0 ? $this : false;
+    }
+
     /**
      * Execute query
      */

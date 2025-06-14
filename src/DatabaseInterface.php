@@ -31,6 +31,7 @@ interface DatabaseInterface {
     public function read_data(string $table, array $fields = [], string $adjunct = "", array $adjunctValues = []);
     public function read_data_all(string $table, array $fields = [], string $adjunct = "", array $adjunctValues = []): array | bool;
     public function write_data(string $table, array $data): self | bool;
+    public function delete(string $table, string $adjunct = "", array $adjunctValues = []): self | bool;
     
     // Helper methods
     public function whereIn(array $inArr): string;
