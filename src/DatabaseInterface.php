@@ -9,6 +9,7 @@ interface DatabaseInterface {
     public function inTransaction(): bool;
     public function transaction(callable $callback): void;
     public function isConnected(): bool;
+    public function instance(): mixed;
     
     // Query execution
     public function prepare(string $sql): self;
