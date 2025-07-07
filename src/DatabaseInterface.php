@@ -54,4 +54,7 @@ interface DatabaseInterface {
     
     // Utility methods
     public static function exportDatabase(string $host, string $user, string $password, string $database, string $targetFolderPath): bool;
+
+    // Query Builder
+    public function queryBuilder(): SimpleQuery;
 }

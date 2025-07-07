@@ -1,12 +1,7 @@
 {
-  "name": "progrmanial/simple-mysqli-fork",
-  "description": "Wrapper class for MySQLi prepared statements",
-  "keywords": [
-    "MySQLi",
-    "MySQL",
-    "prepared",
-    "database"
-  ],
+  "name": "simple-mysqli/simple-mysqli",
+  "description": "A powerful and flexible database query builder with advanced features",
+  "type": "library",
   "license": "MIT",
   "authors": [
     {
@@ -15,7 +10,19 @@
     }
   ],
   "require": {
-    "php": ">=7.1.0"
+    "php": ">=8.0",
+    "ext-mysqli": "*",
+    "ext-pdo": "*",
+    "ext-json": "*",
+    "ext-mbstring": "*",
+    "psr/log": "^3.0",
+    "psr/event-dispatcher": "^1.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5",
+    "squizlabs/php_codesniffer": "^3.6",
+    "phpstan/phpstan": "^1.0",
+    "vimeo/psalm": "^4.0"
   },
   "autoload": {
     "psr-4": {
@@ -24,5 +31,36 @@
     "files": [
       "simple-mysqli.php"
     ]
-  }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "SimpleMDB\\Tests\\": "tests/"
+    }
+  },
+  "scripts": {
+    "test": "phpunit",
+    "cs": "phpcs src tests",
+    "cs-fix": "phpcbf src tests",
+    "static-analysis": [
+      "phpstan analyse src tests",
+      "psalm"
+    ]
+  },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
+  "keywords": [
+    "mysql",
+    "mysqli",
+    "pdo",
+    "database",
+    "query builder",
+    "orm",
+    "batch operations",
+    "schema builder",
+    "query profiler",
+    "query debugger"
+  ]
 }

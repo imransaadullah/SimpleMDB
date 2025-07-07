@@ -4,6 +4,11 @@ namespace SimpleMDB;
 use Exception;
 use PDO;
 use PDOException;
+use SimpleMDB\Traits\LoggerAwareTrait;
+use SimpleMDB\Traits\EventDispatcherAwareTrait;
+use SimpleMDB\Events\BeforeQueryEvent;
+use SimpleMDB\Events\AfterQueryEvent;
+use SimpleMDB\Events\QueryErrorEvent;
 
 /**
  * Class SimplePDO
@@ -11,6 +16,9 @@ use PDOException;
  */
 class SimplePDO implements DatabaseInterface
 {
+    use LoggerAwareTrait;
+    use EventDispatcherAwareTrait;
+
     private $pdo;
     private $stmt;
     private $defaultFetchType;
@@ -239,8 +247,22 @@ class SimplePDO implements DatabaseInterface
         if (!is_array($values)) {
             $values = [$values];
         }
-        $this->stmt = $this->pdo->prepare($sql);
-        $this->stmt->execute($values);
+        // Dispatch and log before query
+        $this->dispatchEvent(new BeforeQueryEvent($sql, $values));
+        $this->log('debug', 'Preparing SQL', ['sql'=>$sql,'params'=>$values]);
+
+        $start = microtime(true);
+        try {
+            $this->stmt = $this->pdo->prepare($sql);
+            $this->stmt->execute($values);
+            $time = microtime(true) - $start;
+            $this->log('debug', 'Executed SQL', ['sql'=>$sql,'time'=>$time]);
+            $this->dispatchEvent(new AfterQueryEvent($sql, $values, $time));
+        } catch (\Throwable $e) {
+            $this->dispatchEvent(new QueryErrorEvent($sql, $values, $e));
+            $this->log('error', 'Query error', ['exception'=>$e]);
+            throw $e;
+        }
         return $this;
     }
 
@@ -543,5 +565,13 @@ class SimplePDO implements DatabaseInterface
     public function getConnectionStats(): array
     {
         return $this->pdo->getAttribute(PDO::ATTR_CONNECTION_STATUS) ? ['status' => 'connected'] : ['status' => 'disconnected'];
+    }
+
+    /**
+     * Get a new SimpleQueryBuilder instance
+     */
+    public function queryBuilder(): SimpleQuery
+    {
+        return new SimpleQuery();
     }
 }

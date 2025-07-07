@@ -1,6 +1,11 @@
 <?php
 
-use SimpleMDB\DatabaseInterface;
+namespace SimpleMDB;
+
+use Exception;
+use mysqli_sql_exception;
+use PDO;
+use SimpleMySQLiException;
 
 /**
  * Class SimpleMySQLi
@@ -60,7 +65,7 @@ class SimpleMySQLi implements DatabaseInterface
 		}
 	
 		mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
-		$this->mysqli = new mysqli();
+		$this->mysqli = new \mysqli();
 		
 		// Set SSL if options are provided
 		if (!empty($sslOptions)) {
@@ -774,5 +779,15 @@ class SimpleMySQLi implements DatabaseInterface
 			default:
 				return 'assoc';
 		}
+	}
+
+	/**
+	 * Get a new SimpleQueryBuilder instance
+	 *
+	 * @throws Exception Indicating that SimpleQueryBuilder is not supported for MySQLi
+	 */
+	public function queryBuilder(): SimpleQuery
+	{
+		return new SimpleQuery();
 	}
 }
