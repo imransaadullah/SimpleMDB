@@ -110,8 +110,10 @@ abstract class Migration
      */
     protected function createTable(string $name, callable $callback): void
     {
-        $callback($this->schema);
-        $this->schema->createTable($name);
+        // Create a fresh SchemaBuilder instance for each table to avoid state conflicts
+        $tableBuilder = new SchemaBuilder($this->db);
+        $callback($tableBuilder);
+        $tableBuilder->createTable($name);
     }
 
     /**
@@ -213,10 +215,13 @@ abstract class Migration
                 $params = array_merge($params, array_values($row));
             }
             
-            $sql = "INSERT INTO $table (" . implode(', ', $columns) . ") VALUES " . implode(', ', $values);
+            $escapedTable = "`{$table}`";
+            $escapedColumns = array_map(fn($col) => "`{$col}`", $columns);
+            $sql = "INSERT INTO {$escapedTable} (" . implode(', ', $escapedColumns) . ") VALUES " . implode(', ', $values);
             $this->db->query($sql, $params);
         } else {
-            $this->db->write_data($table, $data);
+            $escapedTable = "`{$table}`";
+            $this->db->write_data($escapedTable, $data);
         }
     }
 
@@ -225,7 +230,8 @@ abstract class Migration
      */
     protected function update(string $table, array $data, string $where, array $params = []): void
     {
-        $this->db->update($table, $data, "WHERE $where", $params);
+        $escapedTable = "`{$table}`";
+        $this->db->update($escapedTable, $data, "WHERE $where", $params);
     }
 
     /**
@@ -233,7 +239,8 @@ abstract class Migration
      */
     protected function delete(string $table, string $where, array $params = []): void
     {
-        $this->db->delete($table, "WHERE $where", $params);
+        $escapedTable = "`{$table}`";
+        $this->db->delete($escapedTable, "WHERE $where", $params);
     }
 
     /**

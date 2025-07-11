@@ -121,9 +121,16 @@ class SchemaBuilder
         return $this;
     }
 
-    public function default(string $name, $value): self
+    public function default(?string $name, $value = null): self
     {
-        if (isset($this->columns[$name])) {
+        // Handle both signatures: default($value) and default($name, $value)
+        if ($value === null) {
+            // Single parameter: default($value)
+            $value = $name;
+            $name = $this->lastColumn;
+        }
+        
+        if ($name !== null && isset($this->columns[$name])) {
             $this->columns[$name]['default'] = $value;
         }
         return $this;
@@ -188,7 +195,7 @@ class SchemaBuilder
     public function timestamps(): self
     {
         $this->timestamp('created_at')->nullable();
-        $this->timestamp('updated_at', true)->nullable()->default('updated_at', 'CURRENT_TIMESTAMP');
+        $this->timestamp('updated_at', true)->nullable()->default('CURRENT_TIMESTAMP');
         return $this;
     }
 
@@ -200,7 +207,9 @@ class SchemaBuilder
 
     public function createTable(string $tableName): bool
     {
-        $sql = "CREATE TABLE {$tableName} (\n";
+        // Escape table name to prevent SQL injection
+        $escapedTableName = "`{$tableName}`";
+        $sql = "CREATE TABLE {$escapedTableName} (\n";
         
         // Add columns
         $columnDefinitions = [];
@@ -210,17 +219,23 @@ class SchemaBuilder
         
         // Add primary key
         if (!empty($this->primaryKey)) {
-            $columnDefinitions[] = "PRIMARY KEY (" . implode(', ', $this->primaryKey) . ")";
+            $escapedPrimaryKeys = array_map(fn($col) => "`{$col}`", $this->primaryKey);
+            $columnDefinitions[] = "PRIMARY KEY (" . implode(', ', $escapedPrimaryKeys) . ")";
         }
         
         // Add indexes
         foreach ($this->indexes as $name => $index) {
-            $columnDefinitions[] = "{$index['type']} {$name} (" . implode(', ', $index['columns']) . ")";
+            $escapedIndexName = "`{$name}`";
+            $escapedIndexColumns = array_map(fn($col) => "`{$col}`", $index['columns']);
+            $columnDefinitions[] = "{$index['type']} {$escapedIndexName} (" . implode(', ', $escapedIndexColumns) . ")";
         }
         
         // Add foreign keys
         foreach ($this->foreignKeys as $fk) {
-            $columnDefinitions[] = "FOREIGN KEY ({$fk['column']}) REFERENCES {$fk['reference_table']}({$fk['reference_column']})";
+            $escapedColumn = "`{$fk['column']}`";
+            $escapedRefTable = "`{$fk['reference_table']}`";
+            $escapedRefColumn = "`{$fk['reference_column']}`";
+            $columnDefinitions[] = "FOREIGN KEY ({$escapedColumn}) REFERENCES {$escapedRefTable}({$escapedRefColumn})";
         }
         
         $sql .= implode(",\n", $columnDefinitions);
@@ -239,43 +254,73 @@ class SchemaBuilder
         
         try {
             $this->db->query($sql);
+            $this->reset();
             return true;
         } catch (\Exception $e) {
             throw new \Exception("Failed to create table: " . $e->getMessage());
         }
     }
 
+    /**
+     * Reset the schema builder state
+     */
+    public function reset(): self
+    {
+        $this->columns = [];
+        $this->indexes = [];
+        $this->foreignKeys = [];
+        $this->primaryKey = [];
+        $this->engine = null;
+        $this->charset = null;
+        $this->collation = null;
+        $this->lastColumn = null;
+        return $this;
+    }
+
     public function buildColumnDefinition(string $name, array $column): string
     {
-        $def = "{$name} {$column['type']}";
+        // Escape column name to prevent SQL injection
+        $escapedName = "`{$name}`";
+        $def = "{$escapedName} {$column['type']}";
         
+        // Handle column length/precision/values
         if (isset($column['length'])) {
             $def .= "({$column['length']})";
-        } elseif (isset($column['precision'])) {
+        } elseif (isset($column['precision']) && isset($column['scale'])) {
             $def .= "({$column['precision']},{$column['scale']})";
         } elseif (isset($column['values'])) {
-            $values = array_map(fn($v) => "'{$v}'", $column['values']);
+            $values = array_map(fn($v) => "'" . str_replace("'", "''", $v) . "'", $column['values']);
             $def .= "(" . implode(',', $values) . ")";
         }
         
+        // Add UNSIGNED modifier before NULL/NOT NULL
         if (isset($column['unsigned']) && $column['unsigned']) {
             $def .= " UNSIGNED";
         }
         
+        // Handle NULL/NOT NULL
         if (isset($column['nullable']) && $column['nullable']) {
             $def .= " NULL";
         } else {
             $def .= " NOT NULL";
         }
         
+        // Handle default values with proper escaping
         if (isset($column['default'])) {
-            $def .= " DEFAULT " . (is_string($column['default']) ? "'{$column['default']}'" : $column['default']);
+            $default = $column['default'];
+            if (is_string($default) && !in_array(strtoupper($default), ['NULL', 'CURRENT_TIMESTAMP', 'CURRENT_DATE', 'CURRENT_TIME'])) {
+                $def .= " DEFAULT '" . str_replace("'", "''", $default) . "'";
+            } else {
+                $def .= " DEFAULT {$default}";
+            }
         }
         
+        // Add AUTO_INCREMENT
         if (isset($column['auto_increment']) && $column['auto_increment']) {
             $def .= " AUTO_INCREMENT";
         }
         
+        // Add ON UPDATE clause
         if (isset($column['on_update']) && $column['on_update']) {
             $def .= " ON UPDATE CURRENT_TIMESTAMP";
         }
@@ -286,7 +331,8 @@ class SchemaBuilder
     public function dropTable(string $tableName): bool
     {
         try {
-            $this->db->query("DROP TABLE IF EXISTS {$tableName}");
+            $escapedTableName = "`{$tableName}`";
+            $this->db->query("DROP TABLE IF EXISTS {$escapedTableName}");
             return true;
         } catch (\Exception $e) {
             throw new \Exception("Failed to drop table: " . $e->getMessage());
@@ -296,7 +342,7 @@ class SchemaBuilder
     public function hasTable(string $tableName): bool
     {
         try {
-            $result = $this->db->query("SHOW TABLES LIKE '{$tableName}'");
+            $result = $this->db->query("SHOW TABLES LIKE ?", [$tableName]);
             return $result->numRows() > 0;
         } catch (\Exception $e) {
             return false;
@@ -306,7 +352,8 @@ class SchemaBuilder
     public function hasColumn(string $tableName, string $columnName): bool
     {
         try {
-            $result = $this->db->query("SHOW COLUMNS FROM {$tableName} LIKE '{$columnName}'");
+            $escapedTableName = "`{$tableName}`";
+            $result = $this->db->query("SHOW COLUMNS FROM {$escapedTableName} LIKE ?", [$columnName]);
             return $result->numRows() > 0;
         } catch (\Exception $e) {
             return false;
@@ -316,7 +363,8 @@ class SchemaBuilder
     public function addColumn(string $tableName, string $columnName, array $definition): bool
     {
         try {
-            $sql = "ALTER TABLE {$tableName} ADD COLUMN " . $this->buildColumnDefinition($columnName, $definition);
+            $escapedTableName = "`{$tableName}`";
+            $sql = "ALTER TABLE {$escapedTableName} ADD COLUMN " . $this->buildColumnDefinition($columnName, $definition);
             $this->db->query($sql);
             return true;
         } catch (\Exception $e) {
@@ -327,7 +375,9 @@ class SchemaBuilder
     public function dropColumn(string $tableName, string $columnName): bool
     {
         try {
-            $this->db->query("ALTER TABLE {$tableName} DROP COLUMN {$columnName}");
+            $escapedTableName = "`{$tableName}`";
+            $escapedColumnName = "`{$columnName}`";
+            $this->db->query("ALTER TABLE {$escapedTableName} DROP COLUMN {$escapedColumnName}");
             return true;
         } catch (\Exception $e) {
             throw new \Exception("Failed to drop column: " . $e->getMessage());
@@ -337,7 +387,8 @@ class SchemaBuilder
     public function modifyColumn(string $tableName, string $columnName, array $definition): bool
     {
         try {
-            $sql = "ALTER TABLE {$tableName} MODIFY COLUMN " . $this->buildColumnDefinition($columnName, $definition);
+            $escapedTableName = "`{$tableName}`";
+            $sql = "ALTER TABLE {$escapedTableName} MODIFY COLUMN " . $this->buildColumnDefinition($columnName, $definition);
             $this->db->query($sql);
             return true;
         } catch (\Exception $e) {

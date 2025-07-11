@@ -544,13 +544,12 @@ $dispatcher->addListener(BeforeQueryEvent::class, function(BeforeQueryEvent $e) 
     $logger->info('About to execute SQL', ['sql'=>$e->sql,'params'=>$e->params]);
 });
 ```
-
 ---
 
 ## API Reference (Cheat-Sheet)
 
 ### SimpleQuery (builder)
-```
+```php
 select(array|Expression)    count() sum() avg()
 from(string|subquery)       join() leftJoin() ...
 where(cond, params[])       having()
@@ -562,7 +561,7 @@ execute(DatabaseInterface)
 ```
 
 ### SchemaBuilder
-```
+```php
 createTable() / dropTable()
 column helpers: integer() string() text() decimal() ... nullable() default()
 index() unique() foreignKey()
@@ -571,7 +570,7 @@ timestamps() softDeletes()
 ```
 
 ### TableAlter
-```
+```php
 addColumn() dropColumn() modifyColumn() renameColumn()
 addIndex() dropIndex()
 addPrimaryKey() dropPrimaryKey()
@@ -580,12 +579,12 @@ renameTable() setEngine() setCharset() setCollation()
 ```
 
 ### BatchOperations
-```
+```php
 batchInsert() batchUpdate() batchDelete() upsert() transaction()
 ```
 
 ### CacheManager
-```
+```php
 set(key,value,tags[],ttl) get() has() invalidateTag() invalidateTags() clear()
 ```
 
@@ -593,40 +592,40 @@ set(key,value,tags[],ttl) get() has() invalidateTag() invalidateTags() clear()
 See examples above; both expose `getReport()` / `getQueryStats()` plus specialised helpers.
 
 ### Connection Pooling
-```
+```php
 PooledDatabaseFactory::createSimplePool() createMasterSlavePool() createFromEnv()
 getWriteConnection() getReadConnection() executeQuery() transaction()
 getStats() performHealthChecks() closeAll()
 ```
 
 ### Migrations
-```
+```php
 MigrationManager: migrate() rollback() reset() status() create()
 Migration: up() down() getName() getVersion() getDescription()
 Schema helpers: createTable() dropTable() hasTable() hasColumn()
 ```
 
 ### Seeding & Fake Data
-```
+```php
 Seeder: run() getName() getTable() getDependencies()
 FakeDataGenerator: name() email() phone() company() address() text()
 dateBetween() uuid() ipAddress() price() boolean() numberBetween()
 ```
 
 ### Retry Logic
-```
+```php
 RetryPolicy: execute() executeWithSettings() isRetryable()
 RetryableQuery: query() executeQuery() executeBulk() executeInTransaction()
 ```
 
 ### Expression Builder
-```
+```php
 Expression: raw() case() exists() notExists() getExpression() getBindings()
 CaseBuilder: when() else() end()
 ```
 
 ### Advanced Caching
-```
+```php
 RedisCache: connect() get() set() delete() clear() has()
 MemcachedCache: addServer() get() set() delete() clear() has()
 ```

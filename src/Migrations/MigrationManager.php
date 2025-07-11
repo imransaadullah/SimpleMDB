@@ -251,7 +251,8 @@ class MigrationManager
      */
     private function getExecutedMigrations(): array
     {
-        $sql = "SELECT * FROM {$this->migrationTable} ORDER BY executed_at DESC";
+        $escapedTable = "`{$this->migrationTable}`";
+        $sql = "SELECT * FROM {$escapedTable} ORDER BY executed_at DESC";
         return $this->db->query($sql)->fetchAll('assoc');
     }
 
@@ -341,7 +342,8 @@ class MigrationManager
             'execution_time' => round($executionTime, 4)
         ];
 
-        $this->db->write_data($this->migrationTable, $data);
+        $escapedTable = "`{$this->migrationTable}`";
+        $this->db->write_data($escapedTable, $data);
     }
 
     /**
@@ -349,7 +351,8 @@ class MigrationManager
      */
     private function removeMigrationRecord(Migration $migration): void
     {
-        $this->db->delete($this->migrationTable, 'migration = ?', [$migration->getName()]);
+        $escapedTable = "`{$this->migrationTable}`";
+        $this->db->delete($escapedTable, 'migration = ?', [$migration->getName()]);
     }
 
     /**
