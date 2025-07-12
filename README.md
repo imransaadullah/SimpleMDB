@@ -695,29 +695,29 @@ $table->json('data')->unsigned(); // ❌ Error: unsigned() can only be used with
 ### Method 1: Composer (Recommended)
 ```bash
 # Install the latest stable version
-composer require simple-mysqli/simple-mysqli
+composer require simplemdb/simplemdb
 
 # Install specific version
-composer require simple-mysqli/simple-mysqli:^2.0
+composer require simplemdb/simplemdb:^3.0
 
 # Install development version
-composer require simple-mysqli/simple-mysqli:dev-master
+composer require simplemdb/simplemdb:dev-master
 ```
 
 ### Method 2: Manual Installation
 ```bash
 # Download and extract
-wget https://github.com/simple-mysqli/simple-mysqli/archive/master.zip
+wget https://github.com/imrnansaadullah/SimpleMDB/archive/master.zip
 unzip master.zip
 
 # Include in your project
-require_once 'simple-mysqli-master/simple-mysqli.php';
+require_once 'SimpleMDB-master/simple-mysqli.php';
 ```
 
 ### Method 3: Git Clone
 ```bash
-git clone https://github.com/simple-mysqli/simple-mysqli.git
-cd simple-mysqli
+git clone https://github.com/imrnansaadullah/SimpleMDB.git
+cd SimpleMDB
 composer install  # Install dependencies
 ```
 

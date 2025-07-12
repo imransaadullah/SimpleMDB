@@ -1,6 +1,6 @@
 # Changelog
 
-- [**3.0.0**](https://github.com/WebsiteBeaver/Simple-MySQLi/tree/v3.0.0) - January 2025
+- [**3.0.0**](https://github.com/imrnansaadullah/SimpleMDB/tree/v3.0.0) - January 2025
 
   **🚀 MAJOR RELEASE - Enterprise Database Toolkit**
   
@@ -85,12 +85,12 @@
   - Gradual adoption path for new capabilities
   - Comprehensive upgrade documentation
 
-- [**2.1.0**](https://github.com/WebsiteBeaver/Simple-MySQLi/tree/v2.1.0) - 2024
+- [**2.1.0**](https://github.com/imrnansaadullah/SimpleMDB/tree/v2.1.0) - 2024
 
   - Fix migration system: resolve API design, state management, and SQL injection issues
   - Enhanced migration management and error handling
 
-- [**2.0.0**](https://github.com/WebsiteBeaver/Simple-MySQLi/tree/v2.0.0) - 2024
+- [**2.0.0**](https://github.com/imrnansaadullah/SimpleMDB/tree/v2.0.0) - 2024
 
   - Major release: Add comprehensive database toolkit features
   - Enhanced query building and database management

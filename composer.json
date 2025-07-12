@@ -1,5 +1,5 @@
 {
-  "name": "simple-mysqli/simple-mysqli",
+  "name": "simplemdb/simplemdb",
   "description": "Enterprise Database Toolkit for PHP - Modern schema management, intelligent migrations, and advanced query building",
   "version": "3.0.0",
   "type": "library",
@@ -10,6 +10,7 @@
       "email": "imransaadullah@websitebeaver.com"
     }
   ],
+  "homepage": "https://github.com/imrnansaadullah/SimpleMDB",
   "require": {
     "php": ">=8.0",
     "ext-mysqli": "*",
