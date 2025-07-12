@@ -378,6 +378,9 @@ class MigrationManager
      */
     private function getMigrationTemplate(string $className, string $name): string
     {
+        // Detect migration type from name and provide appropriate examples
+        $examples = $this->generateMigrationExamples($name);
+        
         return <<<PHP
 <?php
 
@@ -390,13 +393,7 @@ class {$className} extends Migration
      */
     public function up(): void
     {
-        // TODO: Implement migration logic
-        // Example:
-        // \$this->createTable('example_table', function(\$table) {
-        //     \$table->integer('id', unsigned: true, autoIncrement: true)->primaryKey('id');
-        //     \$table->string('name', 100);
-        //     \$table->timestamps();
-        // });
+{$examples['up']}
     }
 
     /**
@@ -404,12 +401,266 @@ class {$className} extends Migration
      */
     public function down(): void
     {
-        // TODO: Implement rollback logic
-        // Example:
-        // \$this->dropTable('example_table');
+{$examples['down']}
     }
 }
 PHP;
+    }
+
+    /**
+     * Generate appropriate migration examples based on migration name
+     */
+    private function generateMigrationExamples(string $name): array
+    {
+        $name = strtolower($name);
+        
+        // Detect table creation patterns
+        if (preg_match('/create[_\s](.+)[_\s]table/', $name, $matches)) {
+            $tableName = $matches[1];
+            return $this->getCreateTableExamples($tableName);
+        }
+        
+        // Detect column addition patterns
+        if (preg_match('/add[_\s](.+)[_\s]to[_\s](.+)/', $name, $matches)) {
+            $columnName = $matches[1];
+            $tableName = $matches[2];
+            return $this->getAddColumnExamples($tableName, $columnName);
+        }
+        
+        // Detect index addition patterns
+        if (preg_match('/add[_\s](.+)[_\s]index[_\s]to[_\s](.+)/', $name, $matches)) {
+            $indexName = $matches[1];
+            $tableName = $matches[2];
+            return $this->getAddIndexExamples($tableName, $indexName);
+        }
+        
+        // Detect table modification patterns
+        if (preg_match('/modify[_\s](.+)[_\s]table/', $name, $matches) || 
+            preg_match('/alter[_\s](.+)[_\s]table/', $name, $matches)) {
+            $tableName = $matches[1];
+            return $this->getAlterTableExamples($tableName);
+        }
+        
+        // Default examples with all new features
+        return $this->getDefaultExamples();
+    }
+
+    /**
+     * Generate create table examples
+     */
+    private function getCreateTableExamples(string $tableName): array
+    {
+        $tableName = $this->sanitizeTableName($tableName);
+        
+        return [
+            'up' => "        // Create {$tableName} table with modern data types and modifiers
+        \$this->createTable('{$tableName}', function(\$table) {
+            \$table->increments('id');
+            \$table->string('name')->comment('Full name');
+            \$table->string('email')->unique();
+            \$table->timestamp('email_verified_at')->nullable();
+            \$table->string('password');
+            \$table->date('birth_date')->nullable();
+            \$table->enum('status', ['active', 'inactive', 'pending'])->default('active');
+            \$table->json('preferences')->nullable();
+            \$table->ipAddress('last_login_ip')->nullable();
+            \$table->rememberToken();
+            \$table->timestamps();
+            \$table->softDeletes();
+        });",
+            
+            'down' => "        // Drop {$tableName} table
+        \$this->dropTable('{$tableName}');"
+        ];
+    }
+
+    /**
+     * Generate add column examples
+     */
+    private function getAddColumnExamples(string $tableName, string $columnName): array
+    {
+        $tableName = $this->sanitizeTableName($tableName);
+        $columnName = $this->sanitizeColumnName($columnName);
+        
+        // Try to detect column type from name
+        $columnType = $this->detectColumnType($columnName);
+        
+        return [
+            'up' => "        // Add {$columnName} column to {$tableName} table
+        \$this->table('{$tableName}')->addColumn('{$columnName}', {$columnType});",
+            
+            'down' => "        // Remove {$columnName} column from {$tableName} table
+        \$this->table('{$tableName}')->dropColumn('{$columnName}');"
+        ];
+    }
+
+    /**
+     * Generate add index examples
+     */
+    private function getAddIndexExamples(string $tableName, string $indexName): array
+    {
+        $tableName = $this->sanitizeTableName($tableName);
+        $indexName = $this->sanitizeColumnName($indexName);
+        
+        return [
+            'up' => "        // Add index to {$tableName} table
+        \$this->table('{$tableName}')->addIndex(['{$indexName}'], '{$indexName}_index');",
+            
+            'down' => "        // Remove index from {$tableName} table
+        \$this->table('{$tableName}')->dropIndex('{$indexName}_index');"
+        ];
+    }
+
+    /**
+     * Generate alter table examples
+     */
+    private function getAlterTableExamples(string $tableName): array
+    {
+        $tableName = $this->sanitizeTableName($tableName);
+        
+        return [
+            'up' => "        // Modify {$tableName} table structure
+        \$table = \$this->table('{$tableName}');
+        
+        // Add new columns
+        \$table->addColumn('new_field', [
+            'type' => 'VARCHAR',
+            'length' => 255,
+            'nullable' => true,
+            'comment' => 'New field description'
+        ]);
+        
+        // Add index
+        \$table->addIndex(['new_field'], 'new_field_index');",
+            
+            'down' => "        // Reverse {$tableName} table modifications
+        \$table = \$this->table('{$tableName}');
+        
+        // Remove index
+        \$table->dropIndex('new_field_index');
+        
+        // Remove column
+        \$table->dropColumn('new_field');"
+        ];
+    }
+
+    /**
+     * Generate default comprehensive examples
+     */
+    private function getDefaultExamples(): array
+    {
+        return [
+            'up' => "        // Comprehensive example showcasing all new data types and features
+        \$this->createTable('example_table', function(\$table) {
+            // Primary key with auto-increment
+            \$table->increments('id');
+            
+            // String and text types with modifiers
+            \$table->string('title', 200)->comment('Article title');
+            \$table->char('code', 10)->nullable();
+            \$table->text('content')->nullable();
+            
+            // Numeric types
+            \$table->decimal('price', 10, 2)->unsigned()->nullable();
+            \$table->float('rating', 3, 2)->default(0.0);
+            \$table->bigInteger('views')->unsigned()->default(0);
+            \$table->tinyInteger('priority')->default(1);
+            
+            // Date and time types
+            \$table->date('publish_date')->nullable();
+            \$table->time('publish_time')->nullable();
+            \$table->year('copyright_year')->nullable();
+            \$table->timestamp('featured_at')->nullable();
+            
+            // Special types
+            \$table->boolean('is_featured')->default(false);
+            \$table->json('metadata')->nullable();
+            \$table->enum('status', ['draft', 'published', 'archived'])->default('draft');
+            \$table->uuid('external_id')->nullable();
+            \$table->ipAddress('author_ip')->nullable();
+            \$table->macAddress('device_mac')->nullable();
+            
+            // Indexes and constraints
+            \$table->index(['status', 'publish_date'], 'status_date_index');
+            \$table->unique(['title', 'publish_date'], 'title_date_unique');
+            
+            // Standard timestamps and soft deletes
+            \$table->timestamps();
+            \$table->softDeletes();
+        });
+        
+        // Example of polymorphic relationship table
+        \$this->createTable('comments', function(\$table) {
+            \$table->increments('id');
+            \$table->text('content');
+            \$table->morphs('commentable');  // Adds commentable_id and commentable_type
+            \$table->timestamps();
+        });",
+            
+            'down' => "        // Drop created tables
+        \$this->dropTable('comments');
+        \$this->dropTable('example_table');"
+        ];
+    }
+
+    /**
+     * Detect likely column type from column name
+     */
+    private function detectColumnType(string $columnName): string
+    {
+        $columnName = strtolower($columnName);
+        
+        // Email detection
+        if (strpos($columnName, 'email') !== false) {
+            return "['type' => 'VARCHAR', 'length' => 255, 'nullable' => true]";
+        }
+        
+        // URL detection
+        if (strpos($columnName, 'url') !== false || strpos($columnName, 'link') !== false) {
+            return "['type' => 'TEXT', 'nullable' => true]";
+        }
+        
+        // Date detection
+        if (strpos($columnName, 'date') !== false || strpos($columnName, '_at') !== false) {
+            return "['type' => 'TIMESTAMP', 'nullable' => true]";
+        }
+        
+        // Boolean detection
+        if (strpos($columnName, 'is_') === 0 || strpos($columnName, 'has_') === 0 || 
+            strpos($columnName, 'can_') === 0 || strpos($columnName, 'active') !== false) {
+            return "['type' => 'TINYINT', 'length' => 1, 'default' => 0]";
+        }
+        
+        // Integer detection
+        if (strpos($columnName, 'count') !== false || strpos($columnName, 'number') !== false ||
+            strpos($columnName, 'amount') !== false || strpos($columnName, '_id') !== false) {
+            return "['type' => 'INT', 'unsigned' => true, 'nullable' => true]";
+        }
+        
+        // JSON detection
+        if (strpos($columnName, 'data') !== false || strpos($columnName, 'config') !== false ||
+            strpos($columnName, 'settings') !== false || strpos($columnName, 'meta') !== false) {
+            return "['type' => 'JSON', 'nullable' => true]";
+        }
+        
+        // Default to VARCHAR
+        return "['type' => 'VARCHAR', 'length' => 255, 'nullable' => true]";
+    }
+
+    /**
+     * Sanitize table name
+     */
+    private function sanitizeTableName(string $name): string
+    {
+        return preg_replace('/[^a-zA-Z0-9_]/', '', strtolower($name));
+    }
+
+    /**
+     * Sanitize column name
+     */
+    private function sanitizeColumnName(string $name): string
+    {
+        return preg_replace('/[^a-zA-Z0-9_]/', '', strtolower($name));
     }
 
     /**

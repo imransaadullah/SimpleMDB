@@ -10,10 +10,12 @@ use SimpleMySQLiException;
 /**
  * Class SimpleMySQLi
  *
- * @version 1.5.5
+ * @version 3.0.0
  */
 class SimpleMySQLi implements DatabaseInterface
 {
+	public const VERSION = '3.0.0';
+	
 	private $mysqli;
 	private $stmtResult; //used to store get_result()
 	private $stmt;

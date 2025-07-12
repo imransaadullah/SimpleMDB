@@ -57,7 +57,9 @@ class BatchOperations
             }
 
             try {
-                $sql = "INSERT INTO {$table} (" . implode(',', $columns) . ") VALUES " . implode(',', $placeholders);
+                $escapedTable = "`{$table}`";
+                $escapedColumns = array_map(fn($col) => "`{$col}`", $columns);
+                $sql = "INSERT INTO {$escapedTable} (" . implode(',', $escapedColumns) . ") VALUES " . implode(',', $placeholders);
                 $this->log('debug','Batch insert',['sql'=>$sql,'rows'=>count($values)]);
                 $this->db->prepare($sql)->execute($values);
                 $results['successful'] += $this->db->affectedRows();
@@ -110,7 +112,7 @@ class BatchOperations
                         $caseWhen[] = '?';
                     }
 
-                    $cases[] = "WHEN " . implode(' AND ', array_map(fn($col, $val) => "{$col} = ?", $conditions, $whereParts)) . 
+                    $cases[] = "WHEN " . implode(' AND ', array_map(fn($col, $val) => "`{$col}` = ?", $conditions, $whereParts)) . 
                               " THEN (" . implode(',', $caseWhen) . ")";
                     $values = array_merge($values, $whereParts);
                 }
@@ -119,8 +121,12 @@ class BatchOperations
                     continue;
                 }
 
-                $sql = "UPDATE {$table} SET ";
-                foreach ($data as $i => $column) {
+                $escapedTable = "`{$table}`";
+                $escapedDataColumns = array_map(fn($col) => "`{$col}`", $data);
+                $escapedConditionColumns = array_map(fn($col) => "`{$col}`", $conditions);
+                
+                $sql = "UPDATE {$escapedTable} SET ";
+                foreach ($escapedDataColumns as $i => $column) {
                     if ($i > 0) {
                         $sql .= ", ";
                     }
@@ -128,7 +134,7 @@ class BatchOperations
                 }
                 $sql .= " WHERE " . implode(' OR ', array_map(
                     fn($col) => "{$col} IN (" . implode(',', array_fill(0, count($whereIn), '?')) . ")",
-                    $conditions
+                    $escapedConditionColumns
                 ));
 
                 $this->db->prepare($sql)->execute(array_merge($values, $whereIn));
@@ -162,7 +168,8 @@ class BatchOperations
                     $whereParts = [];
                     foreach ($condition as $column => $value) {
                         $column = $this->sanitizer->sanitize($column, 'sql');
-                        $whereParts[] = "{$column} = ?";
+                        $escapedColumn = "`{$column}`";
+                        $whereParts[] = "{$escapedColumn} = ?";
                         $values[] = $value;
                     }
                     $placeholders[] = '(' . implode(' AND ', $whereParts) . ')';
@@ -172,7 +179,8 @@ class BatchOperations
                     continue;
                 }
 
-                $sql = "DELETE FROM {$table} WHERE " . implode(' OR ', $placeholders);
+                $escapedTable = "`{$table}`";
+                $sql = "DELETE FROM {$escapedTable} WHERE " . implode(' OR ', $placeholders);
                 $this->db->prepare($sql)->execute($values);
                 $results['successful'] += $this->db->affectedRows();
             } catch (\Exception $e) {
@@ -224,10 +232,13 @@ class BatchOperations
 
                 // Build UPDATE part for non-unique columns
                 foreach (array_diff($columns, $uniqueColumns) as $column) {
-                    $updateParts[] = "{$column} = VALUES({$column})";
+                    $escapedColumn = "`{$column}`";
+                    $updateParts[] = "{$escapedColumn} = VALUES({$escapedColumn})";
                 }
 
-                $sql = "INSERT INTO {$table} (" . implode(',', $columns) . ") 
+                $escapedTable = "`{$table}`";
+                $escapedColumns = array_map(fn($col) => "`{$col}`", $columns);
+                $sql = "INSERT INTO {$escapedTable} (" . implode(',', $escapedColumns) . ") 
                         VALUES " . implode(',', $placeholders) . "
                         ON DUPLICATE KEY UPDATE " . implode(',', $updateParts);
 

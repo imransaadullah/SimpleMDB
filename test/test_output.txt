@@ -1,0 +1,59 @@
+Testing SchemaBuilder SQL Generation
+=====================================
+
+Test 1: Users table with mixed column types
+-------------------------------------------
+Building schema...
+Generated SQL for users table:
+CREATE TABLE `users` (
+`id` BIGINT UNSIGNED NOT NULL,
+`name` VARCHAR(100) NOT NULL,
+`email` VARCHAR(255) NOT NULL,
+`password` VARCHAR(255) NOT NULL,
+`is_active` TINYINT(1) NOT NULL DEFAULT 1,
+`balance` DECIMAL(10,2) NOT NULL DEFAULT '0.00',
+`metadata` JSON NULL,
+`status` ENUM('active','inactive','pending') NOT NULL DEFAULT 'active',
+`created_at` DATETIME NOT NULL,
+`updated_at` DATETIME NULL,
+PRIMARY KEY (`id`),
+UNIQUE `email_unique` (`email`),
+INDEX `email_index` (`email`)
+)
+
+Test 2: Posts table with foreign key
+------------------------------------
+Generated SQL for posts table:
+CREATE TABLE `posts` (
+`id` INT NOT NULL AUTO_INCREMENT,
+`title` VARCHAR(255) NOT NULL,
+`content` TEXT NOT NULL,
+`user_id` BIGINT UNSIGNED NOT NULL,
+`created_at` TIMESTAMP NOT NULL,
+`updated_at` TIMESTAMP NOT NULL ON UPDATE CURRENT_TIMESTAMP,
+PRIMARY KEY (`id`),
+FOREIGN KEY (`user_id`) REFERENCES `users`(`id`)
+)
+
+Test 3: User roles table with composite primary key
+---------------------------------------------------
+CREATE TABLE `user_roles` (
+`user_id` BIGINT UNSIGNED NOT NULL,
+`role_id` INT UNSIGNED NOT NULL,
+`assigned_at` TIMESTAMP NOT NULL,
+PRIMARY KEY (`user_id`, `role_id`)
+)
+
+Test 4: Testing nullable() and default() on different column types
+-------------------------------------------------------------
+CREATE TABLE `test_table` (
+`name` VARCHAR(255) NULL,
+`description` TEXT NOT NULL DEFAULT 'No description',
+`active` TINYINT(1) NOT NULL DEFAULT 0,
+`price` DECIMAL(8,2) NULL,
+`category` ENUM('A','B','C') NOT NULL DEFAULT 'A',
+`config` JSON NULL,
+`created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+)
+
+All tests completed!

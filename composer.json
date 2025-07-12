@@ -1,6 +1,7 @@
 {
   "name": "simple-mysqli/simple-mysqli",
-  "description": "A powerful and flexible database query builder with advanced features",
+  "description": "Enterprise Database Toolkit for PHP - Modern schema management, intelligent migrations, and advanced query building",
+  "version": "3.0.0",
   "type": "library",
   "license": "MIT",
   "authors": [
@@ -58,9 +59,19 @@
     "database",
     "query builder",
     "orm",
-    "batch operations",
     "schema builder",
+    "migrations",
+    "enterprise",
+    "intelligent migrations",
+    "25+ data types",
+    "column modifiers",
+    "batch operations",
     "query profiler",
-    "query debugger"
+    "query debugger",
+    "connection pooling",
+    "caching",
+    "security",
+    "polymorphic",
+    "modern php"
   ]
 }

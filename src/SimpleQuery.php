@@ -516,4 +516,13 @@ class SimpleQuery
         $this->queryType = 'DELETE';
         return $this;
     }
+    
+    /**
+     * Escape identifier (table name, column name) for SQL injection protection
+     * Usage: ->from(SimpleQuery::escapeIdentifier($tableName))
+     */
+    public static function escapeIdentifier(string $identifier): string
+    {
+        return "`" . str_replace("`", "``", $identifier) . "`";
+    }
 } 
