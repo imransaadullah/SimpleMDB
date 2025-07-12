@@ -1,5 +1,27 @@
 # Changelog
 
+- [**3.0.1**](https://github.com/imrnansaadullah/SimpleMDB/tree/v3.0.1) - January 2025
+
+  **🔧 PATCH RELEASE - Packagist Compatibility Fix**
+  
+  This patch release resolves Packagist validation issues to ensure successful package registration.
+
+  **🐛 Bug Fixes:**
+  - Fix composer.json keywords validation error (removed invalid '+' character from "25+ data types")
+  - Update keywords to comply with Composer specification: `[\p{N}\p{L} ._-]+`
+  - Add more specific keywords for better package discoverability
+
+  **📦 Enhanced Keywords:**
+  - Added: "data types", "uuid", "ulid", "ip address", "mac address"
+  - Added: "enterprise database", "laravel alternative"
+  - Improved SEO and package discovery on Packagist
+
+  **✅ Technical Notes:**
+  - No functional changes from v3.0.0
+  - All enterprise features remain identical
+  - Maintains 100% backward compatibility
+  - Resolves: `keywords.10 : invalid value (25+ data types), must match [\p{N}\p{L} ._-]+`
+
 - [**3.0.0**](https://github.com/imrnansaadullah/SimpleMDB/tree/v3.0.0) - January 2025
 
   **🚀 MAJOR RELEASE - Enterprise Database Toolkit**
