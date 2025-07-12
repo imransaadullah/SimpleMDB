@@ -85,15 +85,30 @@
   - Gradual adoption path for new capabilities
   - Comprehensive upgrade documentation
 
+---
+
+**📍 PROJECT EVOLUTION POINT**
+
+*Note: Versions 2.0.0 and 2.1.0 were released as part of the original Simple-MySQLi fork before the project evolved into SimpleMDB. These versions represent the transition period where enterprise features were being developed.*
+
+---
+
 - [**2.1.0**](https://github.com/imrnansaadullah/SimpleMDB/tree/v2.1.0) - 2024
 
+  **🔧 Transition Release - Enhanced Migration System**
   - Fix migration system: resolve API design, state management, and SQL injection issues
   - Enhanced migration management and error handling
+  - Foundation work for intelligent migration features
+  - *Note: This was the final release before the v3.0.0 enterprise transformation*
 
 - [**2.0.0**](https://github.com/imrnansaadullah/SimpleMDB/tree/v2.0.0) - 2024
 
+  **🚀 Foundation Release - Database Toolkit Features**
   - Major release: Add comprehensive database toolkit features
   - Enhanced query building and database management
+  - Initial schema builder implementation
+  - Migration system foundation
+  - *Note: First major step beyond the original Simple-MySQLi scope*
 
 - [**1.5.5**](https://github.com/WebsiteBeaver/Simple-MySQLi/tree/1.5.5) - September 20, 2018
 

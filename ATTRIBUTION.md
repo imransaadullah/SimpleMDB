@@ -45,6 +45,33 @@ This project evolved from the excellent **Simple-MySQLi** library by WebsiteBeav
 
 We are grateful to the original Simple-MySQLi project for providing the foundation that inspired this work. While SimpleMDB has evolved far beyond the original scope, we acknowledge the value of the original contribution to the PHP community.
 
+## Version History & Compatibility
+
+### SimpleMDB Version Timeline
+- **v1.5.5 and earlier** - Original Simple-MySQLi by WebsiteBeaver
+- **v2.0.0** - Initial fork with database toolkit features (transition period)
+- **v2.1.0** - Enhanced migration system (transition period)
+- **v3.0.0** - Complete transformation to SimpleMDB Enterprise Database Toolkit
+
+### For Users of Earlier Versions
+
+**If you're using v2.0.0 or v2.1.0:**
+- These versions will continue to work but are considered transition releases
+- Upgrade to v3.0.0 is highly recommended for production use
+- All APIs remain backward compatible
+- v3.0.0 adds 19 new data types and 9 new column modifiers
+- Migration to v3.0.0 requires no code changes
+
+**If you're using original Simple-MySQLi (v1.5.5 or earlier):**
+- Consider this a completely different project now
+- Migration guide available in documentation
+- Significant API changes from original Simple-MySQLi
+
+### Package Name Changes
+- **Original**: Not available on Packagist
+- **v2.0.0 - v2.1.0**: `simple-mysqli/simple-mysqli` (fork period)
+- **v3.0.0+**: `simplemdb/simplemdb` (independent project)
+
 ## License Compatibility
 
 Both projects use the MIT License, ensuring compatibility and allowing for this evolution while respecting the original work. 

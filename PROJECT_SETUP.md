@@ -151,4 +151,58 @@ composer require simplemdb/simplemdb
 4. **Launch announcement** on developer communities
 5. **Gather feedback** and iterate based on usage
 
+## 🔄 Handling Earlier Releases
+
+### Version Strategy
+- **Keep all git history** - Shows project evolution transparently
+- **Preserve v2.0.0 and v2.1.0 tags** - For historical reference
+- **Clearly mark transition point** - In changelog and documentation
+- **New package name** - `simplemdb/simplemdb` vs old `simple-mysqli/simple-mysqli`
+
+### For Users on Earlier Versions
+
+#### **Upgrading from v2.1.0 to v3.0.0**
+```bash
+# Old installation
+composer require simple-mysqli/simple-mysqli:^2.1
+
+# New installation  
+composer require simplemdb/simplemdb:^3.0
+```
+
+**Changes required:** None! All v2.1.0 code works unchanged in v3.0.0.
+
+**What you get:**
+- 19 new data types
+- 9 new column modifiers
+- Intelligent migration system
+- Enhanced security and validation
+- Comprehensive documentation
+
+#### **Upgrading from v2.0.0 to v3.0.0**
+```bash
+# Update composer.json
+"simplemdb/simplemdb": "^3.0"
+```
+
+**Changes required:** Minimal - mainly migration system improvements.
+
+#### **Migrating from Original Simple-MySQLi (v1.5.5)**
+This requires a more significant migration as the projects have diverged substantially. See migration guide in documentation.
+
+### Release Support Policy
+- **v3.0.0+**: Active development and support
+- **v2.1.0**: Security fixes only until mid-2025
+- **v2.0.0**: End of life - upgrade recommended
+- **v1.5.5 and earlier**: Use original Simple-MySQLi repository
+
+### Git Tag Management
+All existing tags remain in the repository for historical reference:
+```bash
+git tag -l
+# v2.0.0 - Foundation release
+# v2.1.0 - Transition release  
+# v3.0.0 - SimpleMDB enterprise release
+```
+
 This setup positions SimpleMDB as a professional, enterprise-ready database toolkit that respects its origins while establishing its own identity. 
