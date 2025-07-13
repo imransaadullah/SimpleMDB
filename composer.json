@@ -1,7 +1,6 @@
 {
   "name": "simplemdb/simplemdb",
   "description": "Enterprise Database Toolkit for PHP - Modern schema management, intelligent migrations, and advanced query building",
-  "version": "3.0.1",
   "type": "library",
   "license": "MIT",
   "authors": [
