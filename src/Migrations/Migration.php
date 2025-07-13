@@ -106,7 +106,7 @@ abstract class Migration
     }
 
     /**
-     * Create a new table
+     * Create a new table (strict mode - will fail if table exists)
      */
     protected function createTable(string $name, callable $callback): void
     {
@@ -114,6 +114,34 @@ abstract class Migration
         $tableBuilder = new SchemaBuilder($this->db);
         $callback($tableBuilder);
         $tableBuilder->createTable($name);
+    }
+
+    /**
+     * Create a new table only if it doesn't exist (safe mode)
+     */
+    protected function createTableIfNotExists(string $name, callable $callback): void
+    {
+        // Create a fresh SchemaBuilder instance for each table to avoid state conflicts
+        $tableBuilder = new SchemaBuilder($this->db);
+        $tableBuilder->ifNotExists(); // Set the flag before callback
+        $callback($tableBuilder);
+        $tableBuilder->createTable($name);
+    }
+
+    /**
+     * Create a new table safely (alias for createTableIfNotExists)
+     */
+    protected function safelyCreateTable(string $name, callable $callback): void
+    {
+        $this->createTableIfNotExists($name, $callback);
+    }
+
+    /**
+     * Get a fluent table creator for more expressive table creation
+     */
+    protected function newTable(string $name): \SimpleMDB\TableCreator
+    {
+        return new \SimpleMDB\TableCreator($this->db, $name);
     }
 
     /**

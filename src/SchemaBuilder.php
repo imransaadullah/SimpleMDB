@@ -15,6 +15,7 @@ class SchemaBuilder
     private ?string $charset = null;
     private ?string $collation = null;
     private ?string $lastColumn = null;
+    private bool $ifNotExists = false;
     
     // Common MySQL reserved words that should be avoided as column names
     private const MYSQL_RESERVED_WORDS = [
@@ -210,7 +211,7 @@ class SchemaBuilder
         return $this;
     }
 
-    public function binary(string $name, int $length = null): self
+    public function binary(string $name, ?int $length = null): self
     {
         $this->validateColumnName($name);
         
@@ -844,6 +845,24 @@ class SchemaBuilder
         return $this;
     }
 
+    /**
+     * Set table creation to use IF NOT EXISTS
+     */
+    public function ifNotExists(): self
+    {
+        $this->ifNotExists = true;
+        return $this;
+    }
+
+    /**
+     * Set table creation to be strict (fail if exists) - this is the default
+     */
+    public function strict(): self
+    {
+        $this->ifNotExists = false;
+        return $this;
+    }
+
     public function timestamps(): self
     {
         $this->timestamp('created_at')->default('CURRENT_TIMESTAMP');
@@ -875,7 +894,8 @@ class SchemaBuilder
         
         // Escape table name to prevent SQL injection
         $escapedTableName = "`{$tableName}`";
-        $sql = "CREATE TABLE {$escapedTableName} (\n";
+        $ifNotExistsClause = $this->ifNotExists ? "IF NOT EXISTS " : "";
+        $sql = "CREATE TABLE {$ifNotExistsClause}{$escapedTableName} (\n";
         
         // Add columns
         $columnDefinitions = [];
@@ -940,6 +960,7 @@ class SchemaBuilder
         $this->charset = null;
         $this->collation = null;
         $this->lastColumn = null;
+        $this->ifNotExists = false;
         return $this;
     }
 
@@ -1141,7 +1162,8 @@ class SchemaBuilder
     {
         // Escape table name to prevent SQL injection
         $escapedTableName = "`{$tableName}`";
-        $sql = "CREATE TABLE {$escapedTableName} (\n";
+        $ifNotExistsClause = $this->ifNotExists ? "IF NOT EXISTS " : "";
+        $sql = "CREATE TABLE {$ifNotExistsClause}{$escapedTableName} (\n";
         
         // Add columns
         $columnDefinitions = [];
