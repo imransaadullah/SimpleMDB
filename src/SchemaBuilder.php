@@ -738,6 +738,23 @@ class SchemaBuilder
         return $this;
     }
 
+    /**
+     * Make the last defined column unique (single-column unique constraint)
+     */
+    public function unique(): self
+    {
+        if ($this->lastColumn === null) {
+            throw new \InvalidArgumentException('Cannot set unique(): No column was defined. Call a column method first (e.g., string(), integer(), etc.).');
+        }
+        
+        if (!isset($this->columns[$this->lastColumn])) {
+            throw new \InvalidArgumentException("Cannot set unique(): Column '{$this->lastColumn}' not found.");
+        }
+        
+        $this->columns[$this->lastColumn]['unique'] = true;
+        return $this;
+    }
+
     public function primaryKey(string|array $columns): self
     {
         $columns = is_array($columns) ? $columns : [$columns];
@@ -745,7 +762,7 @@ class SchemaBuilder
         // Validate that all columns exist
         foreach ($columns as $column) {
             if (!isset($this->columns[$column])) {
-                throw new \InvalidArgumentException("Cannot set primary key: Column '{$column}' does not exist. Define the column first.");
+                throw new \InvalidArgumentException("Cannot create primary key: Column '{$column}' does not exist. Define the column first.");
             }
         }
         
@@ -753,7 +770,10 @@ class SchemaBuilder
         return $this;
     }
 
-    public function unique(string|array $columns, ?string $name = null): self
+    /**
+     * Create a unique constraint on one or more columns (table-level unique constraint)
+     */
+    public function uniqueIndex(string|array $columns, ?string $name = null): self
     {
         $columns = is_array($columns) ? $columns : [$columns];
         
@@ -994,6 +1014,11 @@ class SchemaBuilder
         if (isset($column['comment'])) {
             $escapedComment = str_replace("'", "''", $column['comment']);
             $def .= " COMMENT '{$escapedComment}'";
+        }
+        
+        // Add UNIQUE modifier (single-column unique constraint)
+        if (isset($column['unique']) && $column['unique']) {
+            $def .= " UNIQUE";
         }
         
         return $def;
