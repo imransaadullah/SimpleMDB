@@ -520,7 +520,7 @@ class SimpleMySQLi
 	public function atomicQuery($sql, array $values, array $types = []): void
 	{
 		try {
-			$this->mysqli->autocommit(FALSE);
+			$this->beginTransaction();
 
 			$isArray = true;
 			$countValues = count($values);
@@ -561,9 +561,9 @@ class SimpleMySQLi
 				}
 			}
 
-			$this->mysqli->autocommit(TRUE);
+			$this->commit();
 		} catch (Exception $e) {
-			$this->mysqli->rollback();
+			$this->rollback();
 			throw $e;
 		}
 	}
@@ -574,14 +574,29 @@ class SimpleMySQLi
 	 * @param callable $callback Closure to do transaction operations inside. Parameter value is $this
 	 * @throws mysqli_sql_exception If transaction failed due to mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT)
 	 */
+	public function beginTransaction(): bool
+	{
+		return $this->mysqli->begin_transaction();
+	}
+
+	public function commit(): bool
+	{
+		return $this->mysqli->commit();
+	}
+
+	public function rollback(): bool
+	{
+		return $this->mysqli->rollback();
+	}
+
 	public function transaction(callable $callback): void
 	{
 		try {
-			$this->mysqli->autocommit(FALSE);
+			$this->beginTransaction();
 			$callback($this);
-			$this->mysqli->autocommit(TRUE);
+			$this->commit();
 		} catch (Exception $e) {
-			$this->mysqli->rollback();
+			$this->rollback();
 			throw $e;
 		}
 	}

@@ -571,7 +571,7 @@ class SimpleMySQLi implements DatabaseInterface
 	public function atomicQuery($sql, array $values, array $types = []): void
 	{
 		try {
-			$this->mysqli->autocommit(FALSE);
+			$this->beginTransaction();
 
 			$isArray = true;
 			$countValues = count($values);
@@ -612,9 +612,9 @@ class SimpleMySQLi implements DatabaseInterface
 				}
 			}
 
-			$this->mysqli->autocommit(TRUE);
+			$this->commit();
 		} catch (Exception $e) {
-			$this->mysqli->rollback();
+			$this->rollback();
 			throw $e;
 		}
 	}
