@@ -628,11 +628,11 @@ class SimpleMySQLi implements DatabaseInterface
 	public function transaction(callable $callback): void
 	{
 		try {
-			$this->mysqli->autocommit(FALSE);
+			$this->beginTransaction();
 			$callback($this);
-			$this->mysqli->autocommit(TRUE);
+			$this->commit();
 		} catch (Exception $e) {
-			$this->mysqli->rollback();
+			$this->rollback();
 			throw $e;
 		}
 	}

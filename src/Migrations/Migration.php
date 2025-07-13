@@ -204,7 +204,7 @@ abstract class Migration
         }
 
         // Handle batch insert
-        if (is_array($data[0])) {
+        if (isset($data[0]) && is_array($data[0])) {
             $columns = array_keys($data[0]);
             $values = [];
             $params = [];
