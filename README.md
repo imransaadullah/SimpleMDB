@@ -711,7 +711,7 @@ wget https://github.com/imrnansaadullah/SimpleMDB/archive/master.zip
 unzip master.zip
 
 # Include in your project
-require_once 'SimpleMDB-master/simple-mysqli.php';
+require_once 'SimpleMDB-master/vendor/autoload.php';
 ```
 
 ### Method 3: Git Clone

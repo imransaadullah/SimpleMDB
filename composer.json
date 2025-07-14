@@ -28,10 +28,7 @@
   "autoload": {
     "psr-4": {
       "SimpleMDB\\": "src/"
-    },
-    "files": [
-      "simple-mysqli.php"
-    ]
+    }
   },
   "autoload-dev": {
     "psr-4": {

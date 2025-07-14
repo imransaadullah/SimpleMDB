@@ -1,5 +1,120 @@
 # Changelog
 
+- [**4.0.0**](https://github.com/imrnansaadullah/SimpleMDB/tree/v4.0.0) - January 2025
+
+  **🚀 MAJOR RELEASE - Clean Architecture**
+  
+  This major release removes the legacy standalone file to provide a clean, modern architecture focused on the namespaced SimpleMDB implementation.
+
+  **💥 BREAKING CHANGES:**
+  - **Removed**: `simple-mysqli.php` standalone file
+  - **Removed**: Non-namespaced `SimpleMySQLi` class
+  - **Required**: All users must use `SimpleMDB\SimpleMySQLi` namespace
+
+  **🔧 Changes:**
+  - Removed `simple-mysqli.php` from composer.json files autoload
+  - Updated documentation to reference proper autoloader usage
+  - Cleaner codebase with single implementation
+  - Eliminates confusion between standalone and namespaced classes
+
+  **📦 Migration Guide:**
+  ```php
+  // ❌ OLD (No longer available)
+  require_once 'simple-mysqli.php';
+  $db = new SimpleMySQLi($host, $user, $pass, $db);
+  
+  // ✅ NEW (Required)
+  require_once 'vendor/autoload.php';
+  use SimpleMDB\DatabaseFactory;
+  $db = DatabaseFactory::create('mysqli', $host, $user, $pass, $db);
+  ```
+
+  **✅ Benefits:**
+  - Single, consistent implementation
+  - No more class naming conflicts
+  - Proper PSR-4 namespace compliance
+  - Eliminates transaction handling bugs
+  - Easier maintenance and development
+
+- [**3.0.6**](https://github.com/imrnansaadullah/SimpleMDB/tree/v3.0.6) - January 2025
+
+  **🔧 CRITICAL FIX - Transaction Error Resolution**
+  
+  This critical patch fixes the "There is no active transaction" error that occurred during migration execution.
+
+  **🐛 Bug Fixes:**
+  - Fixed `DatabaseFactory` to use namespaced `SimpleMDB\SimpleMySQLi` instead of standalone class
+  - Fixed transaction methods in standalone `simple-mysqli.php` for backward compatibility
+  - Resolved migration system transaction handling conflicts
+
+  **✅ Impact:**
+  - All migration operations now work correctly
+  - Proper transaction handling across all database operations
+  - No code changes required for end users
+
+- [**3.0.5**](https://github.com/imrnansaadullah/SimpleMDB/tree/v3.0.5) - January 2025
+
+  **✨ FEATURE RELEASE - Expressive Table Creation**
+  
+  This release adds expressive, fluent interfaces for table creation with CREATE TABLE IF NOT EXISTS support.
+
+  **🆕 New Features:**
+  - Added `TableCreator` class for fluent table creation
+  - Added `ifNotExists()` and `strict()` methods to SchemaBuilder
+  - Added `createTableIfNotExists()` and `safelyCreateTable()` methods to Migration
+  - Added `newTable()` method returning TableCreator for expressive syntax
+
+  **🔧 Enhanced API:**
+  ```php
+  // Expressive table creation
+  $this->newTable('users')->ifNotExists()->create(function($table) {
+      $table->increments('id');
+      $table->string('name');
+  });
+  
+  // Alternative expressive methods
+  $this->newTable('users')->safely()->create(function($table) { ... });
+  $this->newTable('users')->onlyIfMissing()->create(function($table) { ... });
+  ```
+
+  **✅ Backward Compatibility:**
+  - 100% backward compatible - all existing code unchanged
+  - New features are purely additive
+  - Multiple natural language aliases for better readability
+
+- [**3.0.4**](https://github.com/imrnansaadullah/SimpleMDB/tree/v3.0.4) - January 2025
+
+  **🔧 PATCH RELEASE - Transaction Handling Fix**
+  
+  This patch release fixes transaction handling conflicts in the atomicQuery methods.
+
+  **🐛 Bug Fixes:**
+  - Fixed `atomicQuery()` method in both `src/SimpleMySQLi.php` and `simple-mysqli.php`
+  - Replaced old `autocommit()` approach with proper `beginTransaction()`, `commit()`, `rollback()`
+  - Resolved transaction conflicts causing migration failures
+
+  **✅ Technical Notes:**
+  - Updated transaction handling to use modern MySQLi methods
+  - Maintains backward compatibility
+  - No API changes for end users
+
+- [**3.0.2**](https://github.com/imrnansaadullah/SimpleMDB/tree/v3.0.2) - January 2025
+
+  **🔧 PATCH RELEASE - Migration Fixes**
+  
+  This patch release addresses critical migration system issues.
+
+  **🐛 Bug Fixes:**
+  - Fixed undefined array key 0 error in Migration.php insert method
+  - Added proper array bounds checking with `isset($data[0])`
+  - Fixed transaction method to use proper transaction handling instead of autocommit
+  - Removed version field from composer.json for automatic Packagist version detection
+
+  **✅ Technical Notes:**
+  - Enhanced migration system stability
+  - Improved error handling in data insertion
+  - Better transaction management
+
 - [**3.0.1**](https://github.com/imrnansaadullah/SimpleMDB/tree/v3.0.1) - January 2025
 
   **🔧 PATCH RELEASE - Packagist Compatibility Fix**
