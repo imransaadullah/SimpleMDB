@@ -49,13 +49,16 @@ class MigrationManager
             $this->log('info', "Running migration: {$migration->getName()}");
             
             try {
-                $this->db->transaction(function() use ($migration) {
-                    $startTime = microtime(true);
-                    
-                    $migration->up();
-                    
-                    $executionTime = microtime(true) - $startTime;
-                    
+                $startTime = microtime(true);
+                
+                // Execute migration without transaction wrapper since DDL statements
+                // (CREATE TABLE, ALTER TABLE, etc.) cause implicit commits in MySQL
+                $migration->up();
+                
+                $executionTime = microtime(true) - $startTime;
+                
+                // Record migration execution in a separate transaction
+                $this->db->transaction(function() use ($migration, $executionTime) {
                     $this->recordMigration($migration, $executionTime);
                 });
                 
@@ -114,8 +117,12 @@ class MigrationManager
             $this->log('info', "Rolling back migration: {$migration->getName()}");
             
             try {
+                // Execute rollback without transaction wrapper since DDL statements
+                // (DROP TABLE, ALTER TABLE, etc.) cause implicit commits in MySQL  
+                $migration->down();
+                
+                // Remove migration record in a separate transaction
                 $this->db->transaction(function() use ($migration) {
-                    $migration->down();
                     $this->removeMigrationRecord($migration);
                 });
                 
