@@ -520,7 +520,7 @@ class SimpleMySQLi
 	public function atomicQuery($sql, array $values, array $types = []): void
 	{
 		try {
-			$this->mysqli->autocommit(FALSE);
+			$this->beginTransaction();
 
 			$isArray = true;
 			$countValues = count($values);
@@ -561,9 +561,9 @@ class SimpleMySQLi
 				}
 			}
 
-			$this->mysqli->autocommit(TRUE);
+			$this->commit();
 		} catch (Exception $e) {
-			$this->mysqli->rollback();
+			$this->rollback();
 			throw $e;
 		}
 	}
@@ -577,11 +577,11 @@ class SimpleMySQLi
 	public function transaction(callable $callback): void
 	{
 		try {
-			$this->mysqli->autocommit(FALSE);
+			$this->beginTransaction();
 			$callback($this);
-			$this->mysqli->autocommit(TRUE);
+			$this->commit();
 		} catch (Exception $e) {
-			$this->mysqli->rollback();
+			$this->rollback();
 			throw $e;
 		}
 	}
@@ -640,5 +640,20 @@ class SimpleMySQLi
 		} else {
 			return false;
 		}
+	}
+
+	public function beginTransaction(): bool
+	{
+		return $this->mysqli->begin_transaction();
+	}
+
+	public function commit(): bool
+	{
+		return $this->mysqli->commit();
+	}
+
+	public function rollback(): bool
+	{
+		return $this->mysqli->rollback();
 	}
 }

@@ -1,8 +1,6 @@
 <?php
 namespace SimpleMDB;
 
-use SimpleMySQLi;
-
 class DatabaseFactory
 {
     public const TYPE_MYSQLI = 'mysqli';
@@ -33,8 +31,8 @@ class DatabaseFactory
         array $sslOptions = []
     ): DatabaseInterface {
         return match ($type) {
-            self::TYPE_MYSQLI => new SimpleMySQLi($host, $username, $password, $dbName, $charset, $defaultFetchType, $sslOptions),
-            self::TYPE_PDO => new SimplePDO($host, $username, $password, $dbName, $charset, $defaultFetchType, $sslOptions),
+            self::TYPE_MYSQLI => new \SimpleMDB\SimpleMySQLi($host, $username, $password, $dbName, $charset, $defaultFetchType, $sslOptions),
+            self::TYPE_PDO => new \SimpleMDB\SimplePDO($host, $username, $password, $dbName, $charset, $defaultFetchType, $sslOptions),
             default => throw new \InvalidArgumentException("Invalid database type: $type")
         };
     }
