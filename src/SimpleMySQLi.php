@@ -5,7 +5,7 @@ namespace SimpleMDB;
 use Exception;
 use mysqli_sql_exception;
 use PDO;
-use SimpleMySQLiException;
+use SimpleMDB\Exceptions\SimpleMySQLiException;
 
 /**
  * Class SimpleMySQLi
@@ -628,11 +628,20 @@ class SimpleMySQLi implements DatabaseInterface
 	public function transaction(callable $callback): void
 	{
 		try {
-			$this->beginTransaction();
+			if (!$this->beginTransaction()) {
+				throw new \Exception("Failed to begin transaction: " . $this->mysqli->error);
+			}
+			
 			$callback($this);
-			$this->commit();
+			
+			if (!$this->commit()) {
+				throw new \Exception("Failed to commit transaction: " . $this->mysqli->error);
+			}
 		} catch (Exception $e) {
-			$this->rollback();
+			// Only try to rollback if we have an active transaction
+			if ($this->mysqli->connect_errno === 0) {
+				$this->rollback();
+			}
 			throw $e;
 		}
 	}

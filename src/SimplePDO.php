@@ -421,7 +421,9 @@ class SimplePDO implements DatabaseInterface
     public function atomicQuery($sql, array $values, array $types = []): void
     {
         try {
-            $this->pdo->beginTransaction();
+            if (!$this->pdo->beginTransaction()) {
+                throw new SimplePDOException("Failed to begin transaction");
+            }
 
             $isArray = is_array($sql);
             $countValues = count($values);
@@ -440,9 +442,14 @@ class SimplePDO implements DatabaseInterface
                 }
             }
 
-            $this->pdo->commit();
+            if (!$this->pdo->commit()) {
+                throw new SimplePDOException("Failed to commit transaction");
+            }
         } catch (Exception $e) {
-            $this->pdo->rollBack();
+            // Only rollback if we're actually in a transaction
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             throw $e;
         }
     }
@@ -453,11 +460,20 @@ class SimplePDO implements DatabaseInterface
     public function transaction(callable $callback): void
     {
         try {
-            $this->pdo->beginTransaction();
+            if (!$this->pdo->beginTransaction()) {
+                throw new SimplePDOException("Failed to begin transaction");
+            }
+            
             $callback($this);
-            $this->pdo->commit();
+            
+            if (!$this->pdo->commit()) {
+                throw new SimplePDOException("Failed to commit transaction");
+            }
         } catch (Exception $e) {
-            $this->pdo->rollBack();
+            // Only rollback if we're actually in a transaction
+            if ($this->pdo->inTransaction()) {
+                $this->pdo->rollBack();
+            }
             throw $e;
         }
     }
