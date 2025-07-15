@@ -217,6 +217,31 @@ class BackupBuilder
     }
 
     /**
+     * Use streaming strategy for memory efficiency (optional enhancement)
+     */
+    public function streaming(int $chunkSize = 1000): self
+    {
+        $options = $this->config->getStorageOptions();
+        $options['use_streaming'] = true;
+        $options['chunk_size'] = $chunkSize;
+        $this->config->setStorageOptions($options);
+        return $this;
+    }
+
+    /**
+     * Enable encryption for backup data (optional enhancement)
+     */
+    public function encrypted(string $encryptionKey, string $cipher = 'aes-256-cbc'): self
+    {
+        $options = $this->config->getStorageOptions();
+        $options['encryption_enabled'] = true;
+        $options['encryption_key'] = $encryptionKey;
+        $options['encryption_cipher'] = $cipher;
+        $this->config->setStorageOptions($options);
+        return $this;
+    }
+
+    /**
      * Execute the backup
      */
     public function execute(): BackupResult

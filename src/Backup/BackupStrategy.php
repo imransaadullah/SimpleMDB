@@ -126,7 +126,7 @@ abstract class BackupStrategy
 
         $key = $config->getEncryptionKey();
         $iv = random_bytes(16);
-        $encrypted = openssl_encrypt($data, 'AES-256-CBC', $key, 0, $iv);
+        $encrypted = openssl_encrypt($data, 'aes-256-cbc', $key, 0, $iv);
         
         // Prepend IV to encrypted data
         return base64_encode($iv . base64_decode($encrypted));

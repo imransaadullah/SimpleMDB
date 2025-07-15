@@ -138,6 +138,7 @@ class MySQLDumpStrategy extends BackupStrategy
     private function generateCreateTableSQL(string $database, string $table): string
     {
         try {
+            // Note: SHOW CREATE TABLE is a MySQL administrative command, keeping as raw SQL
             $result = $this->db->query("SHOW CREATE TABLE `{$database}`.`{$table}`")->fetch('assoc');
             
             if (!$result || !isset($result['Create Table'])) {
@@ -163,8 +164,13 @@ class MySQLDumpStrategy extends BackupStrategy
     private function generateInsertSQL(string $database, string $table): string
     {
         try {
-            // Check if table has data
-            $countResult = $this->db->query("SELECT COUNT(*) as count FROM `{$database}`.`{$table}`")->fetch('assoc');
+            // Use SimpleMDB's expressive query builder to check if table has data
+            $countResults = $this->db->queryBuilder()
+                ->select(['COUNT(*) as count'])
+                ->from("`{$database}`.`{$table}`")
+                ->execute($this->db, 'assoc');
+            
+            $countResult = $countResults[0] ?? null;
             $rowCount = (int)($countResult['count'] ?? 0);
             
             if ($rowCount === 0) {
@@ -175,8 +181,11 @@ class MySQLDumpStrategy extends BackupStrategy
             $sql .= "LOCK TABLES `{$table}` WRITE;\n";
             $sql .= "/*!40000 ALTER TABLE `{$table}` DISABLE KEYS */;\n";
             
-            // Get all data from table
-            $dataResult = $this->db->query("SELECT * FROM `{$database}`.`{$table}`")->fetchAll('assoc');
+            // Use SimpleMDB's expressive query builder to get all table data
+            $dataResult = $this->db->queryBuilder()
+                ->select(['*'])
+                ->from("`{$database}`.`{$table}`")
+                ->execute($this->db, 'assoc');
             
             if (!empty($dataResult)) {
                 // Get column names
@@ -258,7 +267,7 @@ class MySQLDumpStrategy extends BackupStrategy
             'tables' => $tables,
             'table_count' => count($tables),
             'compression' => $config->isCompressEnabled() ? $config->getCompressionMethod() : 'none',
-            'encryption' => $config->isEncryptEnabled() ? 'AES-256-CBC' : 'none',
+            'encryption' => $config->isEncryptEnabled() ? 'aes-256-cbc' : 'none',
             'include_tables' => $config->getIncludeTables(),
             'exclude_tables' => $config->getExcludeTables(),
             'description' => $config->getDescription(),

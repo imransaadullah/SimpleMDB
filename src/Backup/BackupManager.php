@@ -24,6 +24,8 @@ class BackupManager
     private array $loadedBackups = [];
     private array $strategies = [];
     private array $storageAdapters = [];
+    private ?SchemaAnalyzer $schemaAnalyzer = null;
+    private ?MigrationGenerator $migrationGenerator = null;
 
     public function __construct(DatabaseInterface $db, string $backupsPath = 'backups')
     {
@@ -175,13 +177,21 @@ class BackupManager
         $this->log('info', "Starting backup execution", ['name' => $config->getName()]);
 
         try {
-            // Get appropriate strategy
-            $strategy = $this->getStrategy($config->getType());
+            // Get appropriate strategy (with optional enhancements)
+            $strategy = $this->getStrategyWithEnhancements($config);
+            
+            // Setup enhanced storage if encryption is requested
+            $this->setupEnhancedStorage($config);
             
             // Execute backup
             $result = $strategy->execute($config);
             
             if ($result->isSuccess()) {
+                // Generate migrations if requested
+                if ($config->shouldGenerateMigrations()) {
+                    $this->generateMigrations($config, $result);
+                }
+                
                 // Record backup metadata
                 $this->recordBackup($result, $config);
                 
@@ -236,6 +246,55 @@ class BackupManager
     }
 
     /**
+     * Get strategy with optional enhancements (streaming, etc.)
+     */
+    private function getStrategyWithEnhancements(BackupConfig $config): BackupStrategy
+    {
+        $options = $config->getStorageOptions();
+        
+        // Use streaming strategy if requested
+        if (isset($options['use_streaming']) && $options['use_streaming']) {
+            $chunkSize = $options['chunk_size'] ?? 1000;
+            $streamingStrategy = new \SimpleMDB\Backup\Strategies\StreamingMySQLDumpStrategy($this->db, $chunkSize);
+            return $streamingStrategy;
+        }
+        
+        // Otherwise use default strategy
+        return $this->getStrategy($config->getType());
+    }
+
+    /**
+     * Setup enhanced storage with encryption if requested
+     */
+    private function setupEnhancedStorage(BackupConfig $config): void
+    {
+        $options = $config->getStorageOptions();
+        
+        // Setup encryption if requested
+        if (isset($options['encryption_enabled']) && $options['encryption_enabled']) {
+            $encryptionKey = $options['encryption_key'] ?? null;
+            $cipher = $options['encryption_cipher'] ?? 'aes-256-cbc';
+            
+            if (!$encryptionKey) {
+                throw new BackupException('Encryption key is required when encryption is enabled');
+            }
+            
+            // Wrap existing storage with encryption
+            $storageType = $this->extractStorageType($config->getStorageLocation());
+            $baseStorage = $this->getStorageAdapter($storageType);
+            
+            $encryptedStorage = new \SimpleMDB\Backup\Storage\EncryptedStorageAdapter(
+                $baseStorage,
+                $encryptionKey,
+                $cipher
+            );
+            
+            // Register the encrypted storage adapter temporarily
+            $this->registerStorageAdapter($storageType . '_encrypted', $encryptedStorage);
+        }
+    }
+
+    /**
      * Get storage adapter
      */
     private function getStorageAdapter(string $type): \SimpleMDB\Backup\Storage\StorageInterface
@@ -275,6 +334,11 @@ class BackupManager
         $this->registerStrategy(BackupType::FULL, $mysqlStrategy);
         $this->registerStrategy(BackupType::SCHEMA_ONLY, $mysqlStrategy);
         $this->registerStrategy(BackupType::DATA_ONLY, $mysqlStrategy);
+        
+        // Register enhanced strategies (optional - automatically used when requested)
+        $streamingStrategy = new \SimpleMDB\Backup\Strategies\StreamingMySQLDumpStrategy($this->db);
+        $this->registerStrategy(BackupType::INCREMENTAL, $streamingStrategy);
+        $this->registerStrategy(BackupType::DIFFERENTIAL, $streamingStrategy);
     }
 
     /**
@@ -290,25 +354,35 @@ class BackupManager
      */
     private function ensureBackupTable(): void
     {
-        $schema = new SchemaBuilder($this->db);
-        
-        if (!$schema->hasTable($this->backupTable)) {
-            $schema->string('id', 255)
-                   ->string('name')
-                   ->string('database_name')
-                   ->string('type', 50)
-                   ->bigInteger('size')->unsigned()
-                   ->string('checksum')->nullable()
-                   ->string('storage_type', 50)->default('local')
-                   ->string('storage_path')
-                   ->text('metadata')->nullable()
-                   ->datetime('created_at')
-                   ->primaryKey('id')
-                   ->index(['name', 'created_at'], 'name_created_index')
-                   ->index(['type'], 'type_index')
-                   ->createTable($this->backupTable);
+        try {
+            $schema = new SchemaBuilder($this->db);
+            
+            if (!$schema->hasTable($this->backupTable)) {
+                $schema->string('id', 255)
+                       ->string('name')
+                       ->string('database_name')
+                       ->string('type', 50)
+                       ->bigInteger('size')->unsigned()
+                       ->string('checksum')->nullable()
+                       ->string('storage_type', 50)->default('local')
+                       ->string('storage_path')
+                       ->text('metadata')->nullable()
+                       ->datetime('created_at')
+                       ->primaryKey('id')
+                       ->index(['name', 'created_at'], 'name_created_index')
+                       ->index(['type'], 'type_index')
+                       ->createTable($this->backupTable);
 
-            $this->log('info', "Created backups table: {$this->backupTable}");
+                $this->log('info', "Created backups table: {$this->backupTable}");
+            }
+        } catch (\Exception $e) {
+            // Table might already exist, try to verify it exists
+            try {
+                $this->db->query("SELECT 1 FROM `{$this->backupTable}` LIMIT 1");
+                $this->log('info', "Backups table already exists: {$this->backupTable}");
+            } catch (\Exception $verifyException) {
+                throw new BackupException("Failed to create or verify backup table: " . $e->getMessage());
+            }
         }
     }
 
@@ -399,5 +473,81 @@ class BackupManager
         $this->backupsPath = rtrim($path, '/');
         $this->loadedBackups = []; // Reset cache
         return $this;
+    }
+
+    /**
+     * Generate migrations from current database schema
+     */
+    private function generateMigrations(BackupConfig $config, BackupResult $result): void
+    {
+        try {
+            $this->log('info', "Generating migrations", ['backup' => $config->getName()]);
+            
+            // Initialize schema analyzer if not already done
+            if (!$this->schemaAnalyzer) {
+                $this->schemaAnalyzer = new SchemaAnalyzer($this->db, $config->getDatabase());
+            }
+            
+            // Analyze database schema
+            $schemaData = $this->schemaAnalyzer->analyzeDatabase();
+            
+            // Filter tables if specified
+            if ($config->getIncludeTables()) {
+                $schemaData['tables'] = array_intersect_key(
+                    $schemaData['tables'], 
+                    array_flip($config->getIncludeTables())
+                );
+            }
+            
+            if ($config->getExcludeTables()) {
+                $schemaData['tables'] = array_diff_key(
+                    $schemaData['tables'], 
+                    array_flip($config->getExcludeTables())
+                );
+            }
+            
+            // Initialize migration generator if not already done
+            if (!$this->migrationGenerator) {
+                $options = [
+                    'expressive_syntax' => $config->getStorageOptions()['use_expressive_syntax'] ?? true,
+                    'split_tables' => $config->getTablesPerFile() < count($schemaData['tables']),
+                    'tables_per_file' => $config->getTablesPerFile(),
+                    'use_comments' => true,
+                    'preserve_order' => true,
+                    'generate_indexes' => true,
+                    'generate_foreign_keys' => true
+                ];
+                
+                $this->migrationGenerator = new MigrationGenerator($schemaData, $options);
+            } else {
+                // Update with new schema data
+                $this->migrationGenerator->__construct($schemaData, [
+                    'expressive_syntax' => $config->getStorageOptions()['use_expressive_syntax'] ?? true,
+                    'split_tables' => $config->getTablesPerFile() < count($schemaData['tables']),
+                    'tables_per_file' => $config->getTablesPerFile(),
+                    'use_comments' => true,
+                    'preserve_order' => true,
+                    'generate_indexes' => true,
+                    'generate_foreign_keys' => true
+                ]);
+            }
+            
+            // Generate migrations
+            $migrationsPath = $this->backupsPath . '/migrations/' . $config->getName();
+            $generatedFiles = $this->migrationGenerator->generateMigrations($migrationsPath);
+            
+            $this->log('info', "Migrations generated successfully", [
+                'backup' => $config->getName(),
+                'files_generated' => count($generatedFiles),
+                'output_path' => $migrationsPath
+            ]);
+            
+        } catch (\Exception $e) {
+            $this->log('error', "Failed to generate migrations", [
+                'backup' => $config->getName(),
+                'error' => $e->getMessage()
+            ]);
+            // Don't fail the backup if migration generation fails
+        }
     }
 } 
