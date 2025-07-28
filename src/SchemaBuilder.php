@@ -1458,4 +1458,210 @@ class SchemaBuilder
         $callback($tableBuilder);
         return $tableBuilder->createTable($tableName);
     }
+
+    /**
+     * Insert record only if it doesn't exist based on unique fields
+     */
+    public function insertIfNotExists(string $tableName, array $data, array $uniqueFields = []): bool
+    {
+        try {
+            // If no unique fields specified, try to find unique constraints
+            if (empty($uniqueFields)) {
+                $uniqueFields = $this->getUniqueFields($tableName);
+            }
+            
+            // If no unique fields found, just insert normally
+            if (empty($uniqueFields)) {
+                $this->db->write_data($tableName, $data);
+                return true;
+            }
+            
+            // Check if record exists based on unique fields
+            $whereConditions = [];
+            $whereValues = [];
+            
+            foreach ($uniqueFields as $field) {
+                if (isset($data[$field])) {
+                    $whereConditions[] = "`{$field}` = ?";
+                    $whereValues[] = $data[$field];
+                }
+            }
+            
+            if (empty($whereConditions)) {
+                // No unique field values provided, insert normally
+                $this->db->write_data($tableName, $data);
+                return true;
+            }
+            
+            // Check if record exists
+            $escapedTableName = "`{$tableName}`";
+            $sql = "SELECT COUNT(*) as count FROM {$escapedTableName} WHERE " . implode(' AND ', $whereConditions);
+            $result = $this->db->query($sql, $whereValues);
+            $row = $result->fetch('assoc');
+            
+            if ($row && $row['count'] > 0) {
+                // Record already exists, don't insert
+                return false;
+            }
+            
+            // Record doesn't exist, insert it
+            $this->db->write_data($tableName, $data);
+            return true;
+            
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Insert multiple records only if they don't exist based on unique fields
+     */
+    public function insertManyIfNotExists(string $tableName, array $records, array $uniqueFields = []): array
+    {
+        $results = [
+            'total' => count($records),
+            'inserted' => 0,
+            'skipped' => 0,
+            'errors' => []
+        ];
+        
+        try {
+            // If no unique fields specified, try to find unique constraints
+            if (empty($uniqueFields)) {
+                $uniqueFields = $this->getUniqueFields($tableName);
+            }
+            
+            foreach ($records as $record) {
+                try {
+                    if ($this->insertIfNotExists($tableName, $record, $uniqueFields)) {
+                        $results['inserted']++;
+                    } else {
+                        $results['skipped']++;
+                    }
+                } catch (\Exception $e) {
+                    $results['errors'][] = $e->getMessage();
+                }
+            }
+            
+        } catch (\Exception $e) {
+            $results['errors'][] = $e->getMessage();
+        }
+        
+        return $results;
+    }
+
+    /**
+     * Upsert record (insert if not exists, update if exists)
+     */
+    public function upsert(string $tableName, array $data, array $uniqueFields = []): bool
+    {
+        try {
+            // If no unique fields specified, try to find unique constraints
+            if (empty($uniqueFields)) {
+                $uniqueFields = $this->getUniqueFields($tableName);
+            }
+            
+            if (empty($uniqueFields)) {
+                // No unique constraints, just insert
+                $this->db->write_data($tableName, $data);
+                return true;
+            }
+            
+            // Build the ON DUPLICATE KEY UPDATE clause
+            $updateFields = array_diff(array_keys($data), $uniqueFields);
+            if (empty($updateFields)) {
+                // No fields to update, just insert
+                $this->db->write_data($tableName, $data);
+                return true;
+            }
+            
+            // Build INSERT ... ON DUPLICATE KEY UPDATE query
+            $columns = array_keys($data);
+            $values = array_values($data);
+            $placeholders = implode(', ', array_fill(0, count($columns), '?'));
+            $escapedColumns = array_map(fn($col) => "`{$col}`", $columns);
+            
+            $updateParts = [];
+            foreach ($updateFields as $field) {
+                $escapedField = "`{$field}`";
+                $updateParts[] = "{$escapedField} = VALUES({$escapedField})";
+            }
+            
+            $escapedTableName = "`{$tableName}`";
+            $sql = "INSERT INTO {$escapedTableName} (" . implode(', ', $escapedColumns) . ") 
+                    VALUES ({$placeholders}) 
+                    ON DUPLICATE KEY UPDATE " . implode(', ', $updateParts);
+            
+            $this->db->query($sql, $values);
+            return true;
+            
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get unique fields for a table
+     */
+    public function getUniqueFields(string $tableName): array
+    {
+        try {
+            $escapedTableName = "`{$tableName}`";
+            $sql = "SHOW INDEX FROM {$escapedTableName} WHERE Non_unique = 0 AND Key_name != 'PRIMARY'";
+            $result = $this->db->query($sql);
+            
+            $uniqueFields = [];
+            while ($row = $result->fetch('assoc')) {
+                $uniqueFields[] = $row['Column_name'];
+            }
+            
+            return $uniqueFields;
+            
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Check if record exists based on unique fields
+     */
+    public function recordExists(string $tableName, array $data, array $uniqueFields = []): bool
+    {
+        try {
+            // If no unique fields specified, try to find unique constraints
+            if (empty($uniqueFields)) {
+                $uniqueFields = $this->getUniqueFields($tableName);
+            }
+            
+            if (empty($uniqueFields)) {
+                return false; // Can't check without unique fields
+            }
+            
+            // Build WHERE conditions
+            $whereConditions = [];
+            $whereValues = [];
+            
+            foreach ($uniqueFields as $field) {
+                if (isset($data[$field])) {
+                    $whereConditions[] = "`{$field}` = ?";
+                    $whereValues[] = $data[$field];
+                }
+            }
+            
+            if (empty($whereConditions)) {
+                return false;
+            }
+            
+            // Check if record exists
+            $escapedTableName = "`{$tableName}`";
+            $sql = "SELECT COUNT(*) as count FROM {$escapedTableName} WHERE " . implode(' AND ', $whereConditions);
+            $result = $this->db->query($sql, $whereValues);
+            $row = $result->fetch('assoc');
+            
+            return $row && $row['count'] > 0;
+            
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
 } 

@@ -125,6 +125,15 @@ interface SchemaBuilderInterface
     public function createTableIfNotExists(string $tableName, callable $callback): bool;
 
     /**
+     * Conditional insert methods (check unique constraints before inserting)
+     */
+    public function insertIfNotExists(string $tableName, array $data, array $uniqueFields = []): bool;
+    public function insertManyIfNotExists(string $tableName, array $records, array $uniqueFields = []): array;
+    public function upsert(string $tableName, array $data, array $uniqueFields = []): bool;
+    public function recordExists(string $tableName, array $data, array $uniqueFields = []): bool;
+    public function getUniqueFields(string $tableName): array;
+
+    /**
      * Table options
      */
     public function engine(string $engine): self;

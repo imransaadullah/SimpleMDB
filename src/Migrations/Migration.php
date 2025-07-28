@@ -318,7 +318,45 @@ abstract class Migration
         $this->schema->addColumnIfNotExists($table, $column, $definition);
     }
 
+    /**
+     * Insert record only if it doesn't exist based on unique fields
+     */
+    protected function insertIfNotExists(string $table, array $data, array $uniqueFields = []): bool
+    {
+        return $this->schema->insertIfNotExists($table, $data, $uniqueFields);
+    }
 
+    /**
+     * Insert multiple records only if they don't exist based on unique fields
+     */
+    protected function insertManyIfNotExists(string $table, array $records, array $uniqueFields = []): array
+    {
+        return $this->schema->insertManyIfNotExists($table, $records, $uniqueFields);
+    }
+
+    /**
+     * Upsert record (insert if not exists, update if exists)
+     */
+    protected function upsert(string $table, array $data, array $uniqueFields = []): bool
+    {
+        return $this->schema->upsert($table, $data, $uniqueFields);
+    }
+
+    /**
+     * Check if record exists based on unique fields
+     */
+    protected function recordExists(string $table, array $data, array $uniqueFields = []): bool
+    {
+        return $this->schema->recordExists($table, $data, $uniqueFields);
+    }
+
+    /**
+     * Get unique fields for a table
+     */
+    protected function getUniqueFields(string $table): array
+    {
+        return $this->schema->getUniqueFields($table);
+    }
 
     /**
      * Check if index exists
