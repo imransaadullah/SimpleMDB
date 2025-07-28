@@ -79,6 +79,13 @@ $migrations->create('create_blog_posts_table');
 - **AES-256 encryption** for sensitive data
 - **Connection pooling** and advanced caching
 
+### **Complete Database Object Management**
+- **Functions & Procedures** with fluent parameter management
+- **Views** with algorithm optimization and security contexts
+- **Events** with flexible scheduling (one-time, recurring, intervals)
+- **Triggers** for data integrity and automated auditing
+- **Unified Management** interface for all database objects
+
 ---
 
 ## 📚 Documentation
@@ -105,6 +112,7 @@ $migrations->create('create_blog_posts_table');
 - **[Security Guide](docs/security.md)** - Enterprise security best practices
 - **[Performance Optimization](docs/performance.md)** - Caching, pooling, optimization
 - **[Backup System](docs/backup-system.md)** - Complete backup and restore solution
+- **[Database Objects](docs/database-objects.md)** - Functions, procedures, views, events, triggers
 - **[Testing Guide](TESTING.md)** - Testing your SimpleMDB applications
 
 ### 🔄 **Migration Guides**
@@ -121,6 +129,7 @@ $migrations->create('create_blog_posts_table');
 | **Data Types** | ✅ 25+ types | ✅ 27+ types | ✅ 20+ types |
 | **Schema Validation** | ✅ **Comprehensive** | ⚠️ Basic | ⚠️ Basic |
 | **Migration Intelligence** | ✅ **Smart Templates** | ⚠️ Static | ❌ Manual |
+| **Database Objects** | ✅ **Complete** | ❌ Limited | ❌ Limited |
 | **Security Features** | ✅ **Enterprise** | ✅ Good | ✅ Good |
 | **Memory Efficiency** | ✅ **Streaming** | ⚠️ Standard | ⚠️ Standard |
 | **Learning Curve** | ✅ **Gentle** | ⚠️ Steep | ⚠️ Steep |
@@ -173,6 +182,40 @@ $backup = $backupManager
     ->encrypted($encryptionKey)     // AES-256 encryption
     ->compress('gzip')             // Space efficient
     ->execute();
+```
+
+### Database Objects Management
+```php
+use SimpleMDB\DatabaseObjects\DatabaseObjectManager;
+
+$objects = new DatabaseObjectManager($db);
+
+// Create a function
+$objects->function('calculate_total')
+    ->inParameter('amount', 'DECIMAL(10,2)')
+    ->returns('DECIMAL(10,2)')
+    ->body("RETURN amount * 1.1;")
+    ->create();
+
+// Create a view with complex logic
+$objects->view('user_summary')
+    ->select("
+        u.id, u.name, u.email,
+        COUNT(o.id) as order_count,
+        SUM(o.total) as total_spent
+    FROM users u
+    LEFT JOIN orders o ON u.id = o.user_id
+    GROUP BY u.id
+    ")
+    ->create();
+
+// Create a trigger for auditing
+$objects->trigger('audit_changes')
+    ->after()
+    ->update()
+    ->on('users')
+    ->body("INSERT INTO audit_log (table_name, action, record_id) VALUES ('users', 'UPDATE', NEW.id);")
+    ->create();
 ```
 
 ---
@@ -324,4 +367,5 @@ MIT License - Use SimpleMDB in any project, commercial or open source.
 
 ---
 
-*Need enterprise support? [Contact us](mailto:support@simplemdb.com) for professional services, training, and custom development.*
+*Need enterprise support? [Contact us](mailto:lems?
+@simplemdb.com) for professional services, training, and custom development.*

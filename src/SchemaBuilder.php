@@ -1059,11 +1059,74 @@ class SchemaBuilder
     public function hasTable(string $tableName): bool
     {
         try {
-            $result = $this->db->query("SHOW TABLES LIKE ?", [$tableName]);
-            return $result->numRows() > 0;
+            // Use information_schema for more reliable table checking
+            $sql = "SELECT COUNT(*) as count FROM information_schema.TABLES 
+                    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?";
+            $result = $this->db->query($sql, [$tableName]);
+            
+            // Fetch the result to get the actual count
+            $row = $result->fetch('assoc');
+            return $row && $row['count'] > 0;
         } catch (\Exception $e) {
             return false;
         }
+    }
+
+    /**
+     * Debug method to check table existence with detailed information
+     */
+    public function debugHasTable(string $tableName): array
+    {
+        $debug = [
+            'table_name' => $tableName,
+            'methods' => []
+        ];
+
+        try {
+            // Method 1: SHOW TABLES (using string concatenation for debug)
+            $sql1 = "SHOW TABLES LIKE '{$tableName}'";
+            $result1 = $this->db->query($sql1);
+            $debug['methods']['show_tables'] = [
+                'sql' => $sql1,
+                'num_rows' => $result1->numRows(),
+                'has_rows' => $result1->numRows() > 0
+            ];
+
+            // Method 2: information_schema (using string concatenation for debug)
+            $sql2 = "SELECT COUNT(*) as count FROM information_schema.TABLES 
+                     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = '{$tableName}'";
+            $result2 = $this->db->query($sql2);
+            $row = $result2->fetch('assoc');
+            $debug['methods']['information_schema'] = [
+                'sql' => $sql2,
+                'row' => $row,
+                'count' => $row ? $row['count'] : 0,
+                'has_table' => $row && $row['count'] > 0
+            ];
+
+            // Method 3: DESCRIBE (will throw if table doesn't exist)
+            try {
+                $sql3 = "DESCRIBE `{$tableName}`";
+                $this->db->query($sql3);
+                $debug['methods']['describe'] = [
+                    'sql' => $sql3,
+                    'success' => true,
+                    'has_table' => true
+                ];
+            } catch (\Exception $e) {
+                $debug['methods']['describe'] = [
+                    'sql' => $sql3,
+                    'success' => false,
+                    'error' => $e->getMessage(),
+                    'has_table' => false
+                ];
+            }
+
+        } catch (\Exception $e) {
+            $debug['error'] = $e->getMessage();
+        }
+
+        return $debug;
     }
 
     public function hasColumn(string $tableName, string $columnName): bool
