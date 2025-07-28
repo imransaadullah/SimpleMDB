@@ -1271,4 +1271,191 @@ class SchemaBuilder
         
         return $sql;
     }
+
+    /**
+     * Check if index exists on a table
+     */
+    public function hasIndex(string $tableName, string $indexName): bool
+    {
+        try {
+            $escapedTableName = "`{$tableName}`";
+            $escapedIndexName = "`{$indexName}`";
+            $sql = "SHOW INDEX FROM {$escapedTableName} WHERE Key_name = ?";
+            $result = $this->db->query($sql, [$indexName]);
+            return $result->numRows() > 0;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if index exists by columns (finds index with matching columns)
+     */
+    public function hasIndexByColumns(string $tableName, array $columns): bool
+    {
+        try {
+            $escapedTableName = "`{$tableName}`";
+            $sql = "SHOW INDEX FROM {$escapedTableName}";
+            $result = $this->db->query($sql);
+            
+            $existingIndexes = [];
+            while ($row = $result->fetch('assoc')) {
+                $indexName = $row['Key_name'];
+                if (!isset($existingIndexes[$indexName])) {
+                    $existingIndexes[$indexName] = [];
+                }
+                $existingIndexes[$indexName][] = $row['Column_name'];
+            }
+            
+            // Sort columns for comparison
+            sort($columns);
+            
+            foreach ($existingIndexes as $indexColumns) {
+                sort($indexColumns);
+                if ($columns === $indexColumns) {
+                    return true;
+                }
+            }
+            
+            return false;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get all indexes for a table
+     */
+    public function getIndexes(string $tableName): array
+    {
+        try {
+            $escapedTableName = "`{$tableName}`";
+            $sql = "SHOW INDEX FROM {$escapedTableName}";
+            $result = $this->db->query($sql);
+            
+            $indexes = [];
+            while ($row = $result->fetch('assoc')) {
+                $indexName = $row['Key_name'];
+                if (!isset($indexes[$indexName])) {
+                    $indexes[$indexName] = [
+                        'name' => $indexName,
+                        'type' => $row['Index_type'],
+                        'unique' => $row['Non_unique'] == 0,
+                        'primary' => $indexName === 'PRIMARY',
+                        'columns' => []
+                    ];
+                }
+                $indexes[$indexName]['columns'][] = $row['Column_name'];
+            }
+            
+            return array_values($indexes);
+        } catch (\Exception $e) {
+            return [];
+        }
+    }
+
+    /**
+     * Add index only if it doesn't exist (idempotent)
+     */
+    public function addIndexIfNotExists(string $tableName, array $columns, ?string $name = null, bool $unique = false): bool
+    {
+        $name = $name ?? implode('_', $columns) . ($unique ? '_unique' : '_index');
+        
+        // Check if index already exists
+        if ($this->hasIndex($tableName, $name)) {
+            return true; // Index already exists, no action needed
+        }
+        
+        // Check if index exists by columns
+        if ($this->hasIndexByColumns($tableName, $columns)) {
+            return true; // Index with same columns already exists
+        }
+        
+        // Add the index
+        try {
+            $alter = $this->table($tableName);
+            $alter->addIndex($columns, $name, $unique);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Add unique index only if it doesn't exist (idempotent)
+     */
+    public function addUniqueIndexIfNotExists(string $tableName, array $columns, ?string $name = null): bool
+    {
+        return $this->addIndexIfNotExists($tableName, $columns, $name, true);
+    }
+
+    /**
+     * Add foreign key only if it doesn't exist (idempotent)
+     */
+    public function addForeignKeyIfNotExists(
+        string $tableName, 
+        string $column, 
+        string $referenceTable, 
+        string $referenceColumn, 
+        ?string $name = null,
+        ?string $onDelete = null,
+        ?string $onUpdate = null
+    ): bool {
+        $name = $name ?? "fk_{$tableName}_{$column}";
+        
+        // Check if foreign key already exists
+        try {
+            $sql = "SELECT CONSTRAINT_NAME 
+                    FROM information_schema.KEY_COLUMN_USAGE 
+                    WHERE TABLE_SCHEMA = DATABASE() 
+                    AND TABLE_NAME = ? 
+                    AND COLUMN_NAME = ? 
+                    AND REFERENCED_TABLE_NAME = ? 
+                    AND REFERENCED_COLUMN_NAME = ?";
+            $result = $this->db->query($sql, [$tableName, $column, $referenceTable, $referenceColumn]);
+            
+            if ($result->numRows() > 0) {
+                return true; // Foreign key already exists
+            }
+        } catch (\Exception $e) {
+            // Continue to create the foreign key
+        }
+        
+        // Add the foreign key
+        try {
+            $alter = $this->table($tableName);
+            $alter->addForeignKey($column, $referenceTable, $referenceColumn, $name, $onDelete, $onUpdate);
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Add column only if it doesn't exist (idempotent)
+     */
+    public function addColumnIfNotExists(string $tableName, string $columnName, array $definition): bool
+    {
+        if ($this->hasColumn($tableName, $columnName)) {
+            return true; // Column already exists
+        }
+        
+        return $this->addColumn($tableName, $columnName, $definition);
+    }
+
+    /**
+     * Create table only if it doesn't exist (idempotent)
+     */
+    public function createTableIfNotExists(string $tableName, callable $callback): bool
+    {
+        if ($this->hasTable($tableName)) {
+            return true; // Table already exists
+        }
+        
+        // Create a fresh SchemaBuilder instance for each table to avoid state conflicts
+        $tableBuilder = new SchemaBuilder($this->db);
+        $tableBuilder->ifNotExists(); // Set the flag before callback
+        $callback($tableBuilder);
+        return $tableBuilder->createTable($tableName);
+    }
 } 

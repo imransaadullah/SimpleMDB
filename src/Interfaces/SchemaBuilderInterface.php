@@ -105,6 +105,26 @@ interface SchemaBuilderInterface
     public function foreignKey(string $column, string $referenceTable, string $referenceColumn): self;
 
     /**
+     * Idempotent index methods (safe for repeated execution)
+     */
+    public function hasIndex(string $tableName, string $indexName): bool;
+    public function hasIndexByColumns(string $tableName, array $columns): bool;
+    public function getIndexes(string $tableName): array;
+    public function addIndexIfNotExists(string $tableName, array $columns, ?string $name = null, bool $unique = false): bool;
+    public function addUniqueIndexIfNotExists(string $tableName, array $columns, ?string $name = null): bool;
+    public function addForeignKeyIfNotExists(
+        string $tableName, 
+        string $column, 
+        string $referenceTable, 
+        string $referenceColumn, 
+        ?string $name = null,
+        ?string $onDelete = null,
+        ?string $onUpdate = null
+    ): bool;
+    public function addColumnIfNotExists(string $tableName, string $columnName, array $definition): bool;
+    public function createTableIfNotExists(string $tableName, callable $callback): bool;
+
+    /**
      * Table options
      */
     public function engine(string $engine): self;

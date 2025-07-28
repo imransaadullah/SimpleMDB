@@ -278,4 +278,69 @@ abstract class Migration
     {
         return date('Y-m-d H:i:s');
     }
+
+    /**
+     * Add index only if it doesn't exist (idempotent)
+     */
+    protected function addIndexIfNotExists(string $table, array $columns, ?string $name = null): void
+    {
+        $this->schema->addIndexIfNotExists($table, $columns, $name);
+    }
+
+    /**
+     * Add unique index only if it doesn't exist (idempotent)
+     */
+    protected function addUniqueIndexIfNotExists(string $table, array $columns, ?string $name = null): void
+    {
+        $this->schema->addUniqueIndexIfNotExists($table, $columns, $name);
+    }
+
+    /**
+     * Add foreign key only if it doesn't exist (idempotent)
+     */
+    protected function addForeignKeyIfNotExists(
+        string $table,
+        string $column,
+        string $referenceTable,
+        string $referenceColumn,
+        ?string $name = null,
+        ?string $onDelete = null,
+        ?string $onUpdate = null
+    ): void {
+        $this->schema->addForeignKeyIfNotExists($table, $column, $referenceTable, $referenceColumn, $name, $onDelete, $onUpdate);
+    }
+
+    /**
+     * Add column only if it doesn't exist (idempotent)
+     */
+    protected function addColumnIfNotExists(string $table, string $column, array $definition): void
+    {
+        $this->schema->addColumnIfNotExists($table, $column, $definition);
+    }
+
+
+
+    /**
+     * Check if index exists
+     */
+    protected function hasIndex(string $table, string $indexName): bool
+    {
+        return $this->schema->hasIndex($table, $indexName);
+    }
+
+    /**
+     * Check if index exists by columns
+     */
+    protected function hasIndexByColumns(string $table, array $columns): bool
+    {
+        return $this->schema->hasIndexByColumns($table, $columns);
+    }
+
+    /**
+     * Get all indexes for a table
+     */
+    protected function getIndexes(string $table): array
+    {
+        return $this->schema->getIndexes($table);
+    }
 } 
