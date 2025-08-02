@@ -660,6 +660,20 @@ class SimpleMySQLi implements DatabaseInterface
 	}
 
 	/**
+	 * Close cursor
+	 *
+	 * @throws mysqli_sql_exception If mysqli function failed due to mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT)
+	 * @return $this
+	 */
+	public function closeCursor(): self
+	{
+		if ($this->stmtResult) {
+			$this->stmtResult->free();
+		}
+		return $this;
+	}
+
+	/**
 	 * Closes MySQL prepared statement
 	 *
 	 * @throws mysqli_sql_exception If mysqli function failed due to mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT)

@@ -45,6 +45,7 @@ interface DatabaseInterface {
     
     // Resource management
     public function freeResult(): self;
+    public function closeCursor(): self;
     public function closeStmt(): self;
     public function close(): void;
     

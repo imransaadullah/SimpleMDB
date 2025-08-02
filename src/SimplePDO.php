@@ -489,6 +489,17 @@ class SimplePDO implements DatabaseInterface
     }
 
     /**
+     * Close cursor
+     */
+    public function closeCursor(): self
+    {
+        if ($this->stmt) {
+            $this->stmt->closeCursor();
+        }
+        return $this;
+    }
+
+    /**
      * Close statement
      */
     public function closeStmt(): self
