@@ -139,7 +139,7 @@ class MongoStyleQueryBuilder implements QueryBuilderInterface
     public function paginate(int $limit, int $offset = 0): self { return $this; }
     public function union(QueryBuilderInterface $query, bool $all = false): self { return $this; }
     public function subquery(QueryBuilderInterface $query, string $alias): self { return $this; }
-    public function with(string $name, self $query): self { return $this; }
+    public function with(string $name, QueryBuilderInterface $query): self { return $this; }
     public function window(string $name, array $partitionBy = [], array $orderBy = []): self { return $this; }
     public function over(?string $windowName = null, array $partitionBy = [], array $orderBy = []): \SimpleMDB\Expression { return new \SimpleMDB\Expression(''); }
     public function rowNumber(array $partitionBy = [], array $orderBy = []): \SimpleMDB\Expression { return new \SimpleMDB\Expression(''); }
