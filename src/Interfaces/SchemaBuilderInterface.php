@@ -2,162 +2,241 @@
 
 namespace SimpleMDB\Interfaces;
 
-use SimpleMDB\DatabaseInterface;
-
 /**
- * Interface for schema building operations
+ * SchemaBuilderInterface
+ * 
+ * Defines the contract for database schema builders across different database engines.
+ * Each database engine can implement this interface with its specific syntax and features.
  */
 interface SchemaBuilderInterface
 {
     /**
-     * Create a new schema builder instance
-     */
-    public function __construct(DatabaseInterface $db);
-
-    /**
-     * Integer column methods
+     * Create a new integer column
      */
     public function integer(string $name, bool $unsigned = false, bool $autoIncrement = false): self;
-    public function bigInteger(string $name, bool $unsigned = false): self;
-    public function mediumInteger(string $name, bool $unsigned = false): self;
-    public function smallInteger(string $name, bool $unsigned = false): self;
-    public function tinyInteger(string $name, bool $unsigned = false): self;
-    public function increments(string $name): self;
-    public function bigIncrements(string $name): self;
 
     /**
-     * String column methods
+     * Create a new big integer column
+     */
+    public function bigInteger(string $name, bool $unsigned = false): self;
+
+    /**
+     * Create a new small integer column
+     */
+    public function smallInteger(string $name, bool $unsigned = false): self;
+
+    /**
+     * Create a new tiny integer column
+     */
+    public function tinyInteger(string $name, bool $unsigned = false): self;
+
+    /**
+     * Create a new medium integer column
+     */
+    public function mediumInteger(string $name, bool $unsigned = false): self;
+
+    /**
+     * Create auto-incrementing integer primary key
+     */
+    public function increments(string $name = 'id'): self;
+
+    /**
+     * Create auto-incrementing big integer primary key
+     */
+    public function bigIncrements(string $name = 'id'): self;
+
+    /**
+     * Create a new string column
      */
     public function string(string $name, int $length = 255): self;
-    public function text(string $name): self;
+
+    /**
+     * Create a new char column
+     */
     public function char(string $name, int $length = 1): self;
-    public function binary(string $name, ?int $length = null): self;
 
     /**
-     * Date/Time column methods
+     * Create a new text column
      */
-    public function datetime(string $name): self;
-    public function timestamp(string $name, bool $onUpdate = false): self;
-    public function date(string $name): self;
-    public function time(string $name, int $precision = 0): self;
-    public function year(string $name): self;
+    public function text(string $name): self;
 
     /**
-     * Numeric column methods
+     * Create a new medium text column
      */
-    public function decimal(string $name, int $precision = 8, int $scale = 2): self;
-    public function float(string $name, int $precision = 8, int $scale = 2): self;
-    public function double(string $name, int $precision = 15, int $scale = 8): self;
+    public function mediumText(string $name): self;
 
     /**
-     * Special column methods
+     * Create a new long text column
+     */
+    public function longText(string $name): self;
+
+    /**
+     * Create a new boolean column
      */
     public function boolean(string $name): self;
-    public function json(string $name): self;
-    public function enum(string $name, array $values): self;
-    public function uuid(string $name): self;
-    public function ulid(string $name): self;
-    public function ipAddress(string $name): self;
-    public function macAddress(string $name): self;
-    public function morphs(string $name): self;
-    public function nullableMorphs(string $name): self;
 
     /**
-     * Unsigned integer methods
+     * Create a new date column
      */
-    public function unsignedBigInteger(string $name): self;
-    public function unsignedInteger(string $name): self;
-    public function unsignedMediumInteger(string $name): self;
-    public function unsignedSmallInteger(string $name): self;
-    public function unsignedTinyInteger(string $name): self;
+    public function date(string $name): self;
 
     /**
-     * Special methods
+     * Create a new datetime column
      */
-    public function rememberToken(): self;
-    public function softDeletesTz(): self;
+    public function dateTime(string $name): self;
+
+    /**
+     * Create a new time column
+     */
+    public function time(string $name, int $precision = 0): self;
+
+    /**
+     * Create a new timestamp column
+     */
+    public function timestamp(string $name): self;
+
+    /**
+     * Add created_at and updated_at timestamp columns
+     */
     public function timestamps(): self;
+
+    /**
+     * Create a new decimal column
+     */
+    public function decimal(string $name, int $precision = 8, int $scale = 2): self;
+
+    /**
+     * Create a new float column
+     */
+    public function float(string $name, int $precision = 8, int $scale = 2): self;
+
+    /**
+     * Create a new double column
+     */
+    public function double(string $name, int $precision = 8, int $scale = 2): self;
+
+    /**
+     * Create a new JSON column
+     */
+    public function json(string $name): self;
+
+    /**
+     * Create a new UUID column
+     */
+    public function uuid(string $name): self;
+
+    /**
+     * Create a new IP address column
+     */
+    public function ipAddress(string $name): self;
+
+    /**
+     * Create a new MAC address column
+     */
+    public function macAddress(string $name): self;
+
+    /**
+     * Create a new binary column
+     */
+    public function binary(string $name, int $length = 255): self;
+
+    /**
+     * Create a new enum column
+     */
+    public function enum(string $name, array $values): self;
+
+    /**
+     * Create a new set column
+     */
+    public function set(string $name, array $values): self;
+
+    /**
+     * Make the column nullable
+     */
+    public function nullable(bool $nullable = true): self;
+
+    /**
+     * Set a default value for the column
+     */
+    public function default($value): self;
+
+    /**
+     * Make the column unique
+     */
+    public function unique(string $indexName = null): self;
+
+    /**
+     * Add an index to the column
+     */
+    public function index(string $indexName = null): self;
+
+    /**
+     * Add a comment to the column
+     */
+    public function comment(string $comment): self;
+
+    /**
+     * Set the column to be unsigned (for numeric types)
+     */
+    public function unsigned(): self;
+
+    /**
+     * Create a primary key
+     */
+    public function primary(array $columns): self;
+
+    /**
+     * Create a foreign key constraint
+     */
+    public function foreign(string $column): ForeignKeyDefinitionInterface;
+
+    /**
+     * Create the table
+     */
+    public function createTable(string $tableName): bool;
+
+    /**
+     * Drop a table
+     */
+    public function dropTable(string $tableName): bool;
+
+    /**
+     * Check if a table exists
+     */
+    public function hasTable(string $tableName): bool;
+
+    /**
+     * Check if a column exists
+     */
+    public function hasColumn(string $tableName, string $columnName): bool;
+
+    /**
+     * Reset the schema builder state
+     */
+    public function reset(): self;
+
+    /**
+     * Set IF NOT EXISTS clause
+     */
+    public function ifNotExists(): self;
+
+    /**
+     * Add soft deletes (deleted_at timestamp)
+     */
     public function softDeletes(): self;
 
     /**
-     * Column modifiers
+     * Create remember token column (for authentication)
      */
-    public function nullable(): self;
-    public function default($value): self;
-    public function unsigned(): self;
-    public function after(string $column): self;
-    public function first(): self;
-    public function comment(string $comment): self;
-    public function columnCharset(string $charset): self;
-    public function columnCollation(string $collation): self;
-    public function autoIncrement(): self;
-    public function useCurrent(): self;
-    public function useCurrentOnUpdate(): self;
-    public function invisible(): self;
-    public function unique(): self;
+    public function rememberToken(): self;
 
     /**
-     * Index methods
+     * Create polymorphic columns (for polymorphic relationships)
      */
-    public function primaryKey(string|array $columns): self;
-    public function uniqueIndex(string|array $columns, ?string $name = null): self;
-    public function index(string|array $columns, ?string $name = null): self;
-    public function foreignKey(string $column, string $referenceTable, string $referenceColumn): self;
+    public function morphs(string $name): self;
 
     /**
-     * Idempotent index methods (safe for repeated execution)
+     * Get table information
      */
-    public function hasIndex(string $tableName, string $indexName): bool;
-    public function hasIndexByColumns(string $tableName, array $columns): bool;
-    public function getIndexes(string $tableName): array;
-    public function addIndexIfNotExists(string $tableName, array $columns, ?string $name = null, bool $unique = false): bool;
-    public function addUniqueIndexIfNotExists(string $tableName, array $columns, ?string $name = null): bool;
-    public function addForeignKeyIfNotExists(
-        string $tableName, 
-        string $column, 
-        string $referenceTable, 
-        string $referenceColumn, 
-        ?string $name = null,
-        ?string $onDelete = null,
-        ?string $onUpdate = null
-    ): bool;
-    public function addColumnIfNotExists(string $tableName, string $columnName, array $definition): bool;
-    public function createTableIfNotExists(string $tableName, callable $callback): bool;
-
-    /**
-     * Conditional insert methods (check unique constraints before inserting)
-     */
-    public function insertIfNotExists(string $tableName, array $data, array $uniqueFields = []): bool;
-    public function insertManyIfNotExists(string $tableName, array $records, array $uniqueFields = []): array;
-    public function upsert(string $tableName, array $data, array $uniqueFields = []): bool;
-    public function recordExists(string $tableName, array $data, array $uniqueFields = []): bool;
-    public function getUniqueFields(string $tableName): array;
-
-    /**
-     * Table options
-     */
-    public function engine(string $engine): self;
-    public function charset(string $charset): self;
-    public function collation(string $collation): self;
-    public function ifNotExists(): self;
-    public function strict(): self;
-
-    /**
-     * Table operations
-     */
-    public function createTable(string $tableName): bool;
-    public function dropTable(string $tableName): bool;
-    public function hasTable(string $tableName): bool;
-    public function hasColumn(string $tableName, string $columnName): bool;
-    public function addColumn(string $tableName, string $columnName, array $definition): bool;
-    public function dropColumn(string $tableName, string $columnName): bool;
-    public function modifyColumn(string $tableName, string $columnName, array $definition): bool;
-
-    /**
-     * Utility methods
-     */
-    public function reset(): self;
-    public function buildColumnDefinition(string $name, array $column): string;
-    public function generateCreateTableSql(string $tableName): string;
-    public function table(string $tableName): \SimpleMDB\TableAlter;
-} 
+    public function getTableInfo(string $tableName): array;
+}

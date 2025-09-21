@@ -3,121 +3,202 @@
 namespace SimpleMDB\Interfaces;
 
 use SimpleMDB\DatabaseInterface;
-use SimpleMDB\Expression;
 
 /**
- * Interface for query building operations
+ * QueryBuilderInterface
+ * 
+ * Defines the contract for query builders across different database engines.
+ * Each database engine can implement this interface with its specific SQL syntax.
  */
 interface QueryBuilderInterface
 {
     /**
-     * Create a new query instance
+     * Set the columns to select
      */
-    public static function create(): self;
+    public function select(array $columns = ['*']): self;
 
     /**
-     * SELECT operations
-     */
-    public function select(array $fields): self;
-    public function selectWithAlias(array $fieldsWithAliases): self;
-    public function count(string $field = '*', string $alias = 'count'): self;
-    public function sum(string $field, string $alias = 'sum'): self;
-    public function avg(string $field, string $alias = 'avg'): self;
-
-    /**
-     * FROM operations
+     * Set the table to select from
      */
     public function from(string $table): self;
-    public function fromWithAlias(string $table, string $alias): self;
-    public function into(string $table): self;
 
     /**
-     * WHERE operations
+     * Add a WHERE clause
      */
-    public function where(string $condition, array $params = []): self;
-    public function addCondition(bool $condition, callable $callback): self;
+    public function where(string $condition, array $bindings = []): self;
 
     /**
-     * JOIN operations
+     * Add an AND WHERE clause
+     */
+    public function andWhere(string $condition, array $bindings = []): self;
+
+    /**
+     * Add an OR WHERE clause
+     */
+    public function orWhere(string $condition, array $bindings = []): self;
+
+    /**
+     * Add a WHERE IN clause
+     */
+    public function whereIn(string $column, array $values): self;
+
+    /**
+     * Add a WHERE NOT IN clause
+     */
+    public function whereNotIn(string $column, array $values): self;
+
+    /**
+     * Add a WHERE BETWEEN clause
+     */
+    public function whereBetween(string $column, array $values): self;
+
+    /**
+     * Add a WHERE LIKE clause
+     */
+    public function whereLike(string $column, string $value): self;
+
+    /**
+     * Add a JOIN clause
      */
     public function join(string $table, string $condition, string $type = 'INNER'): self;
+
+    /**
+     * Add a LEFT JOIN clause
+     */
     public function leftJoin(string $table, string $condition): self;
+
+    /**
+     * Add a RIGHT JOIN clause
+     */
     public function rightJoin(string $table, string $condition): self;
-    public function fullJoin(string $table, string $condition): self;
 
     /**
-     * GROUP BY operations
+     * Add a INNER JOIN clause
      */
-    public function groupBy(array $fields): self;
-    public function having(string $condition, array $params = []): self;
+    public function innerJoin(string $table, string $condition): self;
 
     /**
-     * ORDER BY operations
+     * Add an ORDER BY clause
      */
-    public function orderBy(string $field, string $direction = 'ASC'): self;
+    public function orderBy(string $column, string $direction = 'ASC'): self;
 
     /**
-     * LIMIT operations
+     * Add a GROUP BY clause
      */
-    public function limit(int $count, int $offset = 0): self;
-    public function paginate(int $limit, int $offset = 0): self;
+    public function groupBy(array $columns): self;
 
     /**
-     * UNION operations
+     * Add a HAVING clause
      */
-    public function union(QueryBuilderInterface $query, bool $all = false): self;
-    public function subquery(QueryBuilderInterface $query, string $alias): self;
+    public function having(string $condition, array $bindings = []): self;
 
     /**
-     * Common Table Expressions (CTEs)
+     * Set the LIMIT
      */
-    public function with(string $name, QueryBuilderInterface $query): self;
+    public function limit(int $limit): self;
 
     /**
-     * Window functions
+     * Set the OFFSET
      */
-    public function window(string $name, array $partitionBy = [], array $orderBy = []): self;
-    public function over(?string $windowName = null, array $partitionBy = [], array $orderBy = []): Expression;
-    public function rowNumber(array $partitionBy = [], array $orderBy = []): Expression;
-    public function rank(array $partitionBy = [], array $orderBy = []): Expression;
-    public function denseRank(array $partitionBy = [], array $orderBy = []): Expression;
-    public function lag(string $column, int $offset = 1, $defaultValue = null, array $partitionBy = [], array $orderBy = []): Expression;
-    public function lead(string $column, int $offset = 1, $defaultValue = null, array $partitionBy = [], array $orderBy = []): Expression;
-    public function firstValue(string $column, array $partitionBy = [], array $orderBy = []): Expression;
-    public function lastValue(string $column, array $partitionBy = [], array $orderBy = []): Expression;
+    public function offset(int $offset): self;
 
     /**
-     * INSERT operations
+     * Add DISTINCT clause
+     */
+    public function distinct(): self;
+
+    /**
+     * Set data for INSERT
      */
     public function insert(array $data): self;
 
     /**
-     * UPDATE operations
+     * Set table for INSERT
      */
-    public function update(): self;
+    public function into(string $table): self;
+
+    /**
+     * Set table for UPDATE
+     */
+    public function update(string $table): self;
+
+    /**
+     * Set data for UPDATE
+     */
     public function set(array $data): self;
-    public function table(string $table): self;
 
     /**
-     * DELETE operations
+     * Set table for DELETE
      */
-    public function delete(): self;
+    public function delete(string $table): self;
 
     /**
-     * SQL generation and execution
+     * Execute the query
+     */
+    public function execute(DatabaseInterface $db): array;
+
+    /**
+     * Get the generated SQL
      */
     public function toSql(): string;
-    public function getParams(): array;
-    public function execute(DatabaseInterface $db, string $fetchType = 'assoc');
-    public function executeInTransaction(DatabaseInterface $db, string $fetchType = 'assoc');
 
     /**
-     * Caching
+     * Get the bindings
      */
-    public function enableCache(bool $enable = true): self;
+    public function getBindings(): array;
 
     /**
-     * Utility methods
+     * Reset the query builder
      */
-    public static function escapeIdentifier(string $identifier): string;
-} 
+    public function reset(): self;
+
+    /**
+     * Create a new instance
+     */
+    public static function create(): self;
+
+    /**
+     * Add a raw SQL expression
+     */
+    public function raw(string $sql): self;
+
+    /**
+     * Add a subquery
+     */
+    public function subQuery(QueryBuilderInterface $query): self;
+
+    /**
+     * Add UNION clause
+     */
+    public function union(QueryBuilderInterface $query): self;
+
+    /**
+     * Add UNION ALL clause
+     */
+    public function unionAll(QueryBuilderInterface $query): self;
+
+    /**
+     * Count records
+     */
+    public function count(string $column = '*'): self;
+
+    /**
+     * Sum records
+     */
+    public function sum(string $column): self;
+
+    /**
+     * Average records
+     */
+    public function avg(string $column): self;
+
+    /**
+     * Maximum value
+     */
+    public function max(string $column): self;
+
+    /**
+     * Minimum value
+     */
+    public function min(string $column): self;
+}

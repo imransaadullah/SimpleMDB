@@ -145,8 +145,8 @@ class RetryableQuery
     public function executeWithCustomRetry(
         callable $operation,
         array $args = [],
-        int $maxRetries = null,
-        int $baseDelayMs = null
+        ?int $maxRetries = null,
+        ?int $baseDelayMs = null
     ): mixed {
         return $this->retryPolicy->executeWithSettings(
             $operation,

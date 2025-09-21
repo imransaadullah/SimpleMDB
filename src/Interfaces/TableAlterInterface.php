@@ -2,114 +2,116 @@
 
 namespace SimpleMDB\Interfaces;
 
-use SimpleMDB\DatabaseInterface;
-use SimpleMDB\SchemaBuilder;
-
 /**
- * Interface for table alteration operations
+ * TableAlterInterface
+ * 
+ * Defines the contract for table alteration across different database engines.
+ * Each database engine can implement this interface with its specific ALTER TABLE syntax.
  */
 interface TableAlterInterface
 {
     /**
-     * Create a new table alter instance
+     * Add a new column to the table
      */
-    public function __construct(DatabaseInterface $db, SchemaBuilder $builder, string $tableName);
+    public function addColumn(string $columnName, string $type, array $options = []): self;
 
     /**
-     * Add column operations
+     * Modify an existing column
      */
-    public function addColumn(string $name, array $definition): self;
-    public function addInteger(string $name, bool $unsigned = false, bool $autoIncrement = false): self;
-    public function addString(string $name, int $length = 255): self;
-    public function addText(string $name): self;
-    public function addDateTime(string $name): self;
-    public function addTimestamp(string $name, bool $onUpdate = false): self;
-    public function addDecimal(string $name, int $precision = 8, int $scale = 2): self;
-    public function addBoolean(string $name): self;
-    public function addJson(string $name): self;
-    public function addEnum(string $name, array $values): self;
+    public function modifyColumn(string $columnName, string $type, array $options = []): self;
 
     /**
-     * Modify column operations
+     * Drop a column from the table
      */
-    public function modifyColumn(string $name, array $definition): self;
-    public function changeColumn(string $oldName, string $newName, array $definition): self;
+    public function dropColumn(string $columnName): self;
+
+    /**
+     * Rename a column
+     */
     public function renameColumn(string $oldName, string $newName): self;
 
     /**
-     * Drop column operations
+     * Add an index
      */
-    public function dropColumn(string $name): self;
-    public function dropColumns(array $names): self;
+    public function addIndex(string $indexName, array $columns, string $type = 'INDEX'): self;
 
     /**
-     * Index operations
+     * Drop an index
      */
-    public function addIndex(array $columns, ?string $name = null): self;
-    public function addUniqueIndex(array $columns, ?string $name = null): self;
+    public function dropIndex(string $indexName): self;
+
+    /**
+     * Add a primary key
+     */
     public function addPrimaryKey(array $columns): self;
-    public function dropIndex(string $name): self;
-    public function dropUniqueIndex(string $name): self;
+
+    /**
+     * Drop the primary key
+     */
     public function dropPrimaryKey(): self;
 
     /**
-     * Foreign key operations
+     * Add a foreign key
      */
-    public function addForeignKey(string $column, string $referenceTable, string $referenceColumn, ?string $name = null): self;
-    public function dropForeignKey(string $name): self;
+    public function addForeignKey(string $column, string $referencedTable, string $referencedColumn, array $options = []): self;
 
     /**
-     * Table options
+     * Drop a foreign key
      */
-    public function setEngine(string $engine): self;
-    public function setCharset(string $charset): self;
-    public function setCollation(string $collation): self;
-    public function setComment(string $comment): self;
+    public function dropForeignKey(string $constraintName): self;
 
     /**
-     * Column modifiers
+     * Add a unique constraint
      */
-    public function nullable(): self;
-    public function notNull(): self;
-    public function default($value): self;
-    public function unsigned(): self;
-    public function autoIncrement(): self;
-    public function comment(string $comment): self;
-    public function after(string $column): self;
-    public function first(): self;
+    public function addUnique(array $columns, string $constraintName = null): self;
 
     /**
-     * Execute the alteration
+     * Drop a unique constraint
+     */
+    public function dropUnique(string $constraintName): self;
+
+    /**
+     * Rename the table
+     */
+    public function renameTable(string $newName): self;
+
+    /**
+     * Change table engine (MySQL specific)
+     */
+    public function engine(string $engine): self;
+
+    /**
+     * Change table charset (MySQL specific)
+     */
+    public function charset(string $charset): self;
+
+    /**
+     * Change table collation (MySQL specific)
+     */
+    public function collation(string $collation): self;
+
+    /**
+     * Add a check constraint
+     */
+    public function addCheck(string $constraintName, string $condition): self;
+
+    /**
+     * Drop a check constraint
+     */
+    public function dropCheck(string $constraintName): self;
+
+    /**
+     * Execute the alterations
      */
     public function execute(): bool;
 
     /**
-     * Generate SQL for the alteration
+     * Get the generated SQL statements
      */
-    public function toSql(): string;
+    public function toSql(): array;
 
     /**
-     * Get table name
+     * Reset the alter builder
      */
-    public function getTableName(): string;
-
-    /**
-     * Get database connection
-     */
-    public function getDatabase(): DatabaseInterface;
-
-    /**
-     * Check if table exists
-     */
-    public function tableExists(): bool;
-
-    /**
-     * Get table structure
-     */
-    public function getTableStructure(): array;
-
-    /**
-     * Get column information
-     */
-    public function getColumnInfo(string $columnName): ?array;
-} 
+    public function reset(): self;
+}

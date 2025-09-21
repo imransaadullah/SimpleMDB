@@ -32,29 +32,6 @@ class SchemaBuilder
     public function __construct(DatabaseInterface $db)
     {
         $this->db = $db;
-        
-        // Auto-detect PostgreSQL and delegate to appropriate implementation if needed
-        if ($this->isPostgreSQLDatabase($db)) {
-            $this->initializePostgreSQLCompatibility();
-        }
-    }
-
-    /**
-     * Check if the database is PostgreSQL
-     */
-    private function isPostgreSQLDatabase(DatabaseInterface $db): bool
-    {
-        $className = get_class($db);
-        return str_contains($className, 'PostgreSQL') || str_contains($className, 'Postgre');
-    }
-
-    /**
-     * Initialize PostgreSQL compatibility mode
-     */
-    private function initializePostgreSQLCompatibility(): void
-    {
-        // This could be expanded to modify SQL generation for PostgreSQL
-        // For now, the original SchemaBuilder will work with basic PostgreSQL features
     }
     
     /**

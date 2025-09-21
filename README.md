@@ -13,7 +13,7 @@
 composer require simplemdb/simplemdb
 ```
 
-**Create your first table:**
+**Create your first table (MySQL):**
 ```php
 <?php
 require_once 'vendor/autoload.php';
@@ -21,7 +21,7 @@ require_once 'vendor/autoload.php';
 use SimpleMDB\DatabaseFactory;
 use SimpleMDB\SchemaBuilder;
 
-// Connect to database
+// Connect to MySQL database
 $db = DatabaseFactory::create('pdo', 'localhost', 'root', 'password', 'myapp');
 
 // Create modern table with enterprise features
@@ -36,6 +36,33 @@ $schema->increments('id')                           // Auto-increment primary ke
        ->createTable('users');
 
 echo "✅ Modern users table created!\n";
+```
+
+**Or use PostgreSQL:**
+```php
+<?php
+require_once 'vendor/autoload.php';
+
+use SimpleMDB\DatabaseFactory;
+use SimpleMDB\SchemaBuilder_PostgreSQL;
+
+// Connect to PostgreSQL database
+$db = DatabaseFactory::create('postgresql', 'localhost', 'postgres', 'password', 'myapp');
+
+// Create modern table with PostgreSQL-specific features
+$schema = new SchemaBuilder_PostgreSQL($db);
+$schema->increments('id')                           // SERIAL PRIMARY KEY
+       ->string('name', 100)->comment('Full name')  // VARCHAR with comment
+       ->string('email', 150)->unique()             // Unique email
+       ->boolean('is_active')->default(true)        // Boolean with default
+       ->jsonb('preferences')->nullable()           // JSONB data storage (PostgreSQL)
+       ->inet('last_login_ip')->nullable()          // INET address type (PostgreSQL)
+       ->uuidWithDefault('external_id')             // UUID with gen_random_uuid()
+       ->textArray('tags')->nullable()              // TEXT[] array (PostgreSQL)
+       ->timestamps()                               // created_at, updated_at
+       ->createTable('users');
+
+echo "✅ Modern PostgreSQL users table created!\n";
 ```
 
 **That's it!** You now have a production-ready table with modern data types and enterprise features.
@@ -122,10 +149,47 @@ $migrations->create('create_blog_posts_table');
 
 ---
 
+## 🗄️ Multi-Database Support
+
+SimpleMDB now supports **multiple database engines** with 100% backward compatibility:
+
+### **Supported Databases**
+- ✅ **MySQL** 5.7+ / 8.0+ (Full support)
+- ✅ **MariaDB** 10.2+ (Full support)
+- ✅ **PostgreSQL** 9.6+ / 12.0+ (Full support with advanced features)
+
+### **Database-Specific Features**
+
+| Feature | MySQL | PostgreSQL |
+|---------|-------|------------|
+| **JSON Storage** | `json()` | `json()` + `jsonb()` |
+| **IP Addresses** | `ipAddress()` | `inet()` (native type) |
+| **Arrays** | JSON arrays | Native arrays `textArray()`, `integerArray()` |
+| **UUIDs** | `uuid()` as CHAR(36) | `uuid()` native + `uuidWithDefault()` |
+| **Auto-increment** | `AUTO_INCREMENT` | `SERIAL`/`BIGSERIAL` |
+| **Full-text Search** | `FULLTEXT` indexes | Built-in text search |
+
+### **Connection Examples**
+
+```php
+// MySQL Connection
+$mysql = DatabaseFactory::create('pdo', 'localhost', 'root', 'password', 'myapp');
+
+// PostgreSQL Connection  
+$pgsql = DatabaseFactory::create('postgresql', 'localhost', 'postgres', 'password', 'myapp');
+
+// Same API, different engines!
+$mysql->write_data('users', ['name' => 'John', 'email' => 'john@example.com']);
+$pgsql->write_data('users', ['name' => 'Jane', 'email' => 'jane@example.com']);
+```
+
+---
+
 ## 🎯 Feature Comparison
 
 | Feature | SimpleMDB | Laravel Schema | Doctrine DBAL |
 |---------|-----------|----------------|---------------|
+| **Multi-Database** | ✅ **MySQL + PostgreSQL** | ✅ Multiple | ✅ Multiple |
 | **Data Types** | ✅ 25+ types | ✅ 27+ types | ✅ 20+ types |
 | **Schema Validation** | ✅ **Comprehensive** | ⚠️ Basic | ⚠️ Basic |
 | **Migration Intelligence** | ✅ **Smart Templates** | ⚠️ Static | ❌ Manual |
@@ -133,6 +197,7 @@ $migrations->create('create_blog_posts_table');
 | **Security Features** | ✅ **Enterprise** | ✅ Good | ✅ Good |
 | **Memory Efficiency** | ✅ **Streaming** | ⚠️ Standard | ⚠️ Standard |
 | **Learning Curve** | ✅ **Gentle** | ⚠️ Steep | ⚠️ Steep |
+| **Backward Compatibility** | ✅ **100%** | ⚠️ Breaking changes | ⚠️ Breaking changes |
 
 ---
 
@@ -223,9 +288,13 @@ $objects->trigger('audit_changes')
 ## ⚙️ System Requirements
 
 - **PHP**: 8.0 or higher
-- **MySQL**: 5.7+ or 8.0+ (recommended)
-- **MariaDB**: 10.2+ (fully supported)
-- **Extensions**: PDO or MySQLi (at least one required)
+- **Databases**: 
+  - **MySQL**: 5.7+ or 8.0+ (recommended)
+  - **MariaDB**: 10.2+ (fully supported)  
+  - **PostgreSQL**: 9.6+ or 12.0+ (recommended)
+- **Extensions**: 
+  - PDO or MySQLi (for MySQL/MariaDB)
+  - PDO with pdo_pgsql (for PostgreSQL)
 - **Memory**: 64MB minimum (128MB recommended)
 
 ---
