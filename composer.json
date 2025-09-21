@@ -1,5 +1,5 @@
 {
-  "name": "progrmanial/simplemdb",
+  "name": "simplemdb/simplemdb",
   "description": "Enterprise Database Toolkit for PHP - Modern schema management, intelligent migrations, and advanced query building",
   "type": "library",
   "license": "MIT",
